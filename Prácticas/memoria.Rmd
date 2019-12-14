@@ -161,22 +161,31 @@ Por último, en el tercer gráfico podemos observar que se plantea la misma din�
 
 ## Preprocesamiento de los datos.
 
-Tal y como se ha podido comprobar en los resultados estadísticos anteriores, el número de muestras del conjunto de entrenamiento es bastante considerable. Asimismo, también hemos podido comprobar que existen clases de medicamentos con un número de muestras extremadamente mayoritario, como es 'Birth Control', por lo que no todas cuentan con la misma representación dentro del dataset. Es por ello por lo que, a continuación, se procede a aplicar un tratamiento consistente en reducir el conjunto de entrenamiento a 5.000 muestras. Para ello reduciremos el número de enfermedades a 10 y para cada una de ellas obtendremos 500 muestras. De este modo equilibramos las diversas clases de medicamentos existentes para, posteriormente, poder aplicar diversos algoritmos.
+Realizando el análisis exploratorio anterior, nos percatamos de que existen reviews repetidas para una misma enfermedad. Creemos que es debido a que para una misma dolencia se han recetado varios medicamentos y cuando el paciente ha aportado su opinión, esta se ha asignado a cada uno de los tratamientos recetados para la misma enfermedad los cuales ocupan un registro distinto. Por ello, actualmente disponemos de reviews iguales para varias filas dentro del conjunto de datos de entrenamiento, asociadas a una misma enfermedad y a los diversos tratamientos recetados para paliarla. Con el objetivo de poder aplicar, posteriormente, los algoritmos vistos en esta asignatura y así obtener resultados representativos, vamos a aplicar un procesamiento equivalente a eliminar aquellos registros caracterizados por la misma fecha, enfermedad, puntuación del tratamiento, valoración de la crítica por otros pacientes pero con diferente tratamiento.  
+
+```{r data processing}
+# Eliminamos las filas que tengan la misma crítica.
+new_training_dataset<-training_dataset[!duplicated(training_dataset$review), ]
+# Comprobamos que no existen reviews repetidas.
+reviews_repetidas<-new_training_dataset[duplicated(new_training_dataset$review)]
+is_empty(reviews_repetidas)
+```
+Una vez hemos eliminado aquellos registros que disponen de la misma crítica, comenzaremos con el submuestreo del dataset para reducir su tamaño. Y es que, tal y como se ha podido comprobar en los resultados estadísticos anteriores, el número de muestras del conjunto de entrenamiento es bastante considerable. Asimismo, también hemos podido comprobar que existen clases de medicamentos con un número de muestras extremadamente mayoritario, como es 'Birth Control', por lo que no todas cuentan con la misma representación dentro del dataset. Es por ello por lo que, a continuación, se procede a aplicar un tratamiento consistente en reducir el conjunto de entrenamiento a 5.000 muestras. Para ello reduciremos el número de enfermedades a 10 y para cada una de ellas obtendremos 500 muestras. De este modo equilibramos las diversas clases de medicamentos existentes para, posteriormente, poder aplicar diversos algoritmos.
 
 ```{r data processing}
 # Obtenemos un resumen acerca de las enfermedades registradas en el dataset.
-recuento_etiquetas<-summary(training_dataset$condition)
+recuento_etiquetas<-summary(new_training_dataset$condition)
 # Recopilamos los nombres de las enfermedades.
 etiquetas<-names(recuento_etiquetas)
 # Formamos un dataset más pequeño con las 10 enfermedades con mayor número de ejemplos y les asociamos 500 muestras para cada una.
 n_enfermedades_max = 10
 n_muestras_max = 500
 # Primera enfermedad
-mini_training_dataset <- head(subset(training_dataset, training_dataset$condition==etiquetas[1]), n_muestras_max)
+mini_training_dataset <- head(subset(new_training_dataset, new_training_dataset$condition==etiquetas[1]), n_muestras_max)
 # Resto de enfermedades
 for (i in c(2:n_enfermedades_max)) {
-  mini_training_dataset <- rbind(mini_training_dataset, head(subset(training_dataset,
-    training_dataset$condition==etiquetas[i]), n_muestras_max))
+  mini_training_dataset <- rbind(mini_training_dataset, head(subset(new_training_dataset,
+    new_training_dataset$condition==etiquetas[i]), n_muestras_max))
 }
 # Desorganizamos los datos
 set.seed(42)
@@ -192,6 +201,10 @@ dataframe<-data.frame(enfermedades=enfermedades[1:10], recuento=recuento[1:10])
 ggplot(data=dataframe, aes(x=enfermedades, y=recuento)) + geom_bar(stat="identity")+coord_flip()+ggtitle('Clases de enfermedades.')
 ```
 
-Como podemos comprobar en la gráfica anterior, en este dataset reducido ya no hay clases mayoritarias ni minoritarias, si no que todas disponen del mismo número de muestras representativas. Por lo tanto, hemos conseguido obtener un conjunto de datos de entrenamiento equilibrado con 5.000 muestras.
+Como podemos comprobar en la gráfica anterior, en este dataset reducido ya no hay clases mayoritarias ni minoritarias, si no que todas disponen del mismo número de muestras representativas. Por lo tanto, hemos conseguido obtener un conjunto de datos de entrenamiento equilibrado con 5.000 muestras, es decir, 500 muestras para cada etiqueta que representa cada una de las diez enfermedades más comunes.
 
-<reviews repetidas>
+## Análisis de correlación.
+
+## Análisis de la influencia de las variables.
+
+## Algoritmos.
