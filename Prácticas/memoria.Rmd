@@ -1,0 +1,197 @@
+---
+title: "Memoria de las prácticas de Tratamiento Inteligente de Datos."
+author: "Lidia Sánchez Mérida, Fernando Roldán Zafra."
+date: "4/12/2019"
+output: html_document
+---
+
+## Exploración de datos del conjunto de entrenamiento original.
+
+Este dataset que hemos seleccionado proporciona dos conjuntos, uno de entrenamiento y otro de prueba, en los que se recogen las opiniones de los pacientes, diagnosticados de una determinada enfermedad, acerca de los tratamientos que han probado. Existen dos tipos de opiniones, principalmente, una de ellas consiste en valorar el medicamento recetado para una enfermedad en concreto de 0 a 10. Por otro lado también se recopila, para cada opinión de un paciente, el número de personas que consideran que su crítica es útil. 
+
+La elección de este dataset se fundamenta en diversos motivos. El más importante es que cumple con los requisitos establecidos por el profesor para, posteriormente, aplicar los algoritmos vistos en esta asignatura. Sin embargo, también tuvimos en cuenta la organización de competiciones de Machine Learning en las que se proponía este dataset como principal protagonista. 
+
+Para comenzar con el estudio estadístico cargamos los datos de entrenamiento.
+```{r training}
+# Cargamos la biblioteca que utilizaremos para graficar los datos estadísticos.
+library(ggplot2)
+# Cargamos los datos de entrenamiento
+training_dataset <- read.csv(file="C:/Users/usuario/Desktop/TID/Prácticas/Dataset - Medicamentos/drugsComTrain_raw.csv", header=TRUE, sep=",")
+```
+
+A continuación presentamos las estadísticas que hemos pensado son más relevantes para nuestro dataset en particular. En primer lugar averiguamos las diez enfermedades más comunes que se encuentran registradas en nuestro conjunto de datos con el objetivo de visualizar aquellas dolencias que se presentan más frecuente en un centro sanitario.
+
+```{r training}
+# 1) Enfermedades más comunes.
+# Extraemos un resumen acerca de las enfermedades registradas.
+recuento_enfermedades<-summary(training_dataset$condition)
+# Convertimos los resultados anteriores en una matriz para poder trabajar con ellos.
+enfermedades_matriz<-data.matrix(recuento_enfermedades)
+# Obtenemos los nombres de las dolencias.
+enfermedades<-names(recuento_enfermedades)
+# También obtenemos el número de muestras de cada enfermedad.
+recuento<-enfermedades_matriz[1:length(enfermedades_matriz)]
+# Componemos un data frame con las enfermedades y el número de muestras para cada una.
+dataframe<-data.frame(enfermedades=enfermedades[1:10], recuento=recuento[1:10])
+# Las representamos en un gráfico de barras.
+ggplot(data=dataframe, aes(x=enfermedades, y=recuento)) + geom_bar(stat="identity")+coord_flip()+ggtitle('Enfermedades más comunes.')
+```
+Tal y como se puede comprobar que la enfermedad *Birth Control* es consideráblemente mayoritaria frente al número de muestras asociadas a las otras nueve enfermedades. Por ello, cuando reduzcamos nuestro conjunto de entrenamiento y test, deberemos tener en cuenta este aspecto de modo que todas las enfermedades escogidas tengan un número de muestras suficiente para ser representadas de forma equilibrada.
+
+A continuación realizaremos el mismo experimento en relación a los medicamentos con el fin de conocer cuáles son los más recetados de forma general.
+
+```{r training}
+# 2) Medicamentos más comunes.
+# Repetimos el procedimiento anterior para los medicamentos.
+recuento_medicamentos<-summary(training_dataset$drugName)
+medicamentos_matriz<-data.matrix(recuento_medicamentos)
+medicamentos<-names(recuento_medicamentos)
+recuento<-medicamentos_matriz[1:length(medicamentos_matriz)]
+dataframe<-data.frame(medicamentos=medicamentos[1:10], recuento=recuento[1:10])
+ggplot(data=dataframe, aes(x=medicamentos, y=recuento)) + geom_bar(stat="identity")+coord_flip()+ggtitle('Medicamentos más comunes.')
+```
+
+Una vez hemos exploradas las enfermedades y medicamentos más comunes, los dos siguientes datos estadísticos consisten en asociar estos dos factores con el objetivo de conocer qué enfermedades más comunes se encuentran asociadas a un medicamento y cuáles de los medicamentos más comunes son recetados para una misma enfermedad. En esta tercera estadística nos ocuparemos del primer caso. 
+```{r training}
+# 3) Enfermedades comunes asociadas con un medicamento.
+```
+
+CONCLUSIONES
+
+```{r training}
+# 4) Medicamentos para cada enfermedad más común.
+```
+
+CONCLUSIONES
+
+En el siguiente dato estadístico estudiaremos la valoración de los medicamentos para cada una de las diez enfermedades más comunes con el objetivo de conocer la eficacia, según los pacientes, de los tratamientos que en general se recetan para cada dolencia. 
+
+```{r training}
+# 5) Eficacia general de los tratamientos recetados para las diez enfermedades más comunes.
+# 5.1) Puntuación de los medicamentos asociados a "Birth Control".
+# Extraemos un dataset solo con los registros asociados a la enfermedad en cuestión.
+birth_control_dataset = subset(training_dataset, training_dataset$condition=="Birth Control")
+# Calculamos variables estadísticas como la mediana, la media, el mínimo y máximo así como los cuartiles.
+print("Estadísticas sobre los medicamentos para 'Birth Control'.")
+summary(birth_control_dataset$rating)
+# 5.2) Puntuación de los medicamentos asociados a "Depression".
+depression_dataset = subset(training_dataset, training_dataset$condition=="Depression")
+print("Estadísticas sobre los medicamentos para 'Depression'.")
+summary(depression_dataset$rating)
+# 5.3) Puntuación de los medicamentos asociados a "Pain".
+pain_dataset = subset(training_dataset, training_dataset$condition=="Pain")
+print("Estadísticas sobre los medicamentos para 'Pain'.")
+summary(pain_dataset$rating)
+# 5.4) Puntuación de los medicamentos asociados a "Anxiety".
+anxiety_dataset = subset(training_dataset, training_dataset$condition=="Anxiety")
+print("Estadísticas sobre los medicamentos para 'Anxiety'.")
+summary(anxiety_dataset$rating)
+# 5.5) Puntuación de los medicamentos asociados a "Acne".
+acne_dataset = subset(training_dataset, training_dataset$condition=="Acne")
+print("Estadísticas sobre los medicamentos para 'Acne'.")
+summary(acne_dataset$rating)
+# 5.6) Puntuación de los medicamentos asociados a "Bipolar Disorde".
+bipolar_disorde_dataset = subset(training_dataset, training_dataset$condition=="Bipolar Disorde")
+print("Estadísticas sobre los medicamentos para 'Bipolar Disorde'.")
+summary(bipolar_disorde_dataset$rating)
+# 5.7) Puntuación de los medicamentos asociados a "Insomnia".
+insomnia_dataset = subset(training_dataset, training_dataset$condition=="Insomnia")
+print("Estadísticas sobre los medicamentos para 'Insomnia'.")
+summary(insomnia_dataset$rating)
+# 5.8) Puntuación de los medicamentos asociados a "Weight Loss".
+weight_loss_dataset = subset(training_dataset, training_dataset$condition=="Weight Loss")
+print("Estadísticas sobre los medicamentos para 'Weight Loss'.")
+summary(weight_loss_dataset$rating)
+# 5.9) Puntuación de los medicamentos asociados a "Obesity".
+obesity_dataset = subset(training_dataset, training_dataset$condition=="Obesity")
+print("Estadísticas sobre los medicamentos para 'Obesity'.")
+summary(obesity_dataset$rating)
+# 5.10) Puntuación de los medicamentos asociados a "ADHD".
+adhd_dataset = subset(training_dataset, training_dataset$condition=="ADHD")
+print("Estadísticas sobre los medicamentos para 'ADHD'.")
+summary(adhd_dataset$rating)
+```
+Como podemos comprobar en los resultados anteriores, si consideramos las medianas calculadas, es decir, la puntuación que se encuentra en la mitad del ranking, las enfermedades cuyos tratamientos, en general, son mejores valorados por los pacientes son Pain, Anxiety, Acne, Weight Loss y Obesity. Por el contrario, la que peor mediana tiene es Birth Control. Una de las ventajas de utilizar la mediana reside en la resistencia asociada a los valores de las puntuaciones, puesto que para calcularla lo único que se necesita es ordenar dichos valores y escoger el que se encuentra en la posición intermedia. Sin embargo, la media sí que se encuentra influida por los valores de las puntuaciones y, por lo tanto, se ve sesgada, principalmente, por los valores más bajos. Sin embargo, a través de esta variable estadística podemos confirmar las mismas conclusiones extraídas anteriormente, y además, nos permite agregar un mayor grado de concreción con respecto a los tratamientos mejor valorados. En este caso, podemos comprobar que la enfermedad cuyos tratamientos son mejor valorados es Weight Loss, seguida de Obesity y Anxiety.
+
+A continuación procedemos cuáles son los medicamentos más efectivos, según la población, para estas tres enfermedades, con el objetivo de conocer las puntuaciones de los tratamientos que han provocado los buenos resultados observados anteriormente. Sin embargo, como el número de registros para cada una de las enfermedades es sumamente considerable, vamos a agregar una segunda condición. Esta trata de conseguir los medicamentos que a su vez son los más recetados. De este modo podremos conocer cuáles son los tratamientos más efectivos, según los pacients afectados por las tres enfermedades anteriores, además de los más comúnmente recetados. Con todos estos criterios los resultados, para esta dolencia en concreto, se pueden visualizar a continuación.
+
+```{r training}
+# 6) Medicamentos con mejores críticas y más veces recetados.
+# 6.1) Para la primera enfermedad: 'Weight Loss'.
+# Extraemos un dataset con las muestras asociadas solo a la enfermedad Weight Loss y con solamente los 
+# medicamentos que tengan una valoración 10/10.
+birth_control_dataset = subset(training_dataset, training_dataset$condition=="Weight Loss" & training_dataset$rating==10)
+# Extraemos un resumen estadístico acerca de este pequeño dataset de Weight Loss.
+recuento_medicamentos_weight_loss = summary(birth_control_dataset$drugName)
+# Convertimos los datos a una matriz para poder trabajar con ellos.
+medicamentos_matriz<-data.matrix(recuento_medicamentos_weight_loss)
+# Obtenemos los nombres de los medicamentos para esta enfermedad en particular.
+medicamentos<-names(recuento_medicamentos_weight_loss)
+# Obtenemos el número de veces que han sido recetados cada uno de ellos.
+recuento<-medicamentos_matriz[1:length(medicamentos_matriz)]
+# Componemos un dataframe con estos últimos datos.
+dataframe<-data.frame(medicamentos=medicamentos[1:10], recuento=recuento[1:10])
+# Lo representamos mediante un gráfico de barras.
+ggplot(data=dataframe,aes(x=medicamentos, y=recuento)) + geom_bar(stat="identity")+coord_flip()+ggtitle('Mejores medicamentos para "Weight Loss"')
+
+# 6.2) Para la segunda enfermedad: 'Obesity'
+obesity_dataset = subset(training_dataset, training_dataset$condition=="Obesity" & training_dataset$rating==10)
+recuento_medicamentos_obesity = summary(obesity_dataset$drugName)
+medicamentos_matriz<-data.matrix(recuento_medicamentos_obesity)
+medicamentos<-names(recuento_medicamentos_obesity)
+recuento<-medicamentos_matriz[1:length(medicamentos_matriz)]
+dataframe<-data.frame(medicamentos=medicamentos[1:10], recuento=recuento[1:10])
+ggplot(data=dataframe,aes(x=medicamentos, y=recuento)) + geom_bar(stat="identity")+coord_flip()+ggtitle('Mejores medicamentos para "Obesiy"')
+
+# 6.3) Para la tercera enfermedad: 'Anxiety'
+anxiety_dataset = subset(training_dataset, training_dataset$condition=="Anxiety" & training_dataset$rating==10)
+recuento_medicamentos_anxiety = summary(anxiety_dataset$drugName)
+medicamentos_matriz<-data.matrix(recuento_medicamentos_anxiety)
+medicamentos<-names(recuento_medicamentos_anxiety)
+recuento<-medicamentos_matriz[1:length(medicamentos_matriz)]
+dataframe<-data.frame(medicamentos=medicamentos[1:10], recuento=recuento[1:10])
+ggplot(data=dataframe,aes(x=medicamentos, y=recuento)) + geom_bar(stat="identity")+coord_flip()+ggtitle('Mejores medicamentos para "Anxiety"')
+
+```
+En el primer gráfico resultante podemos comprobar que existe un medicamento con una puntuación máxima y que, a su vez, es cláramente el más recetado denominado 'Phentermine/topiramate'. Por ello podemos determinar que en función de las críticas de los pacientes afectados por esta dolencia en concreto, este es el tratamiento mejor valorado y más comúnmente recetado.
+
+No sucede lo mismo con el segundo gráfico en el que se muestran los diez medicamentos con una puntuación máxima y, a su vez, lo más recetados. En este caso existen dos tratamientos con un número bastante similar de recetas, por lo que podemos pensar que son los dos medicamentos más eficaces contra esta dolencia además de ser los dos más recetados. 
+
+Por último, en el tercer gráfico podemos observar que se plantea la misma dinámica que en el primero, es decir, de nuevo existe un medicamento contra, en este caso, la ansiedad que tiene la mejor puntuación posible (10 de 10) y que es el más recetado.
+
+## Preprocesamiento de los datos.
+
+Tal y como se ha podido comprobar en los resultados estadísticos anteriores, el número de muestras del conjunto de entrenamiento es bastante considerable. Asimismo, también hemos podido comprobar que existen clases de medicamentos con un número de muestras extremadamente mayoritario, como es 'Birth Control', por lo que no todas cuentan con la misma representación dentro del dataset. Es por ello por lo que, a continuación, se procede a aplicar un tratamiento consistente en reducir el conjunto de entrenamiento a 5.000 muestras. Para ello reduciremos el número de enfermedades a 10 y para cada una de ellas obtendremos 500 muestras. De este modo equilibramos las diversas clases de medicamentos existentes para, posteriormente, poder aplicar diversos algoritmos.
+
+```{r data processing}
+# Obtenemos un resumen acerca de las enfermedades registradas en el dataset.
+recuento_etiquetas<-summary(training_dataset$condition)
+# Recopilamos los nombres de las enfermedades.
+etiquetas<-names(recuento_etiquetas)
+# Formamos un dataset más pequeño con las 10 enfermedades con mayor número de ejemplos y les asociamos 500 muestras para cada una.
+n_enfermedades_max = 10
+n_muestras_max = 500
+# Primera enfermedad
+mini_training_dataset <- head(subset(training_dataset, training_dataset$condition==etiquetas[1]), n_muestras_max)
+# Resto de enfermedades
+for (i in c(2:n_enfermedades_max)) {
+  mini_training_dataset <- rbind(mini_training_dataset, head(subset(training_dataset,
+    training_dataset$condition==etiquetas[i]), n_muestras_max))
+}
+# Desorganizamos los datos
+set.seed(42)
+rows<-sample(nrow(mini_training_dataset))
+mini_training_dataset<-mini_training_dataset[rows,]
+
+# Repetimos el proceso que se ha aplicado anteriormente para la obtención de ciertas estadísticas para comprobar que realmente el nuevo conjunto de entrenamiento reducido está balanceado.
+recuento_enfermedades<-summary(mini_training_dataset$condition)
+enfermedades_matriz<-data.matrix(recuento_enfermedades)
+enfermedades<-names(recuento_enfermedades)
+recuento<-enfermedades_matriz[1:length(enfermedades_matriz)]
+dataframe<-data.frame(enfermedades=enfermedades[1:10], recuento=recuento[1:10])
+ggplot(data=dataframe, aes(x=enfermedades, y=recuento)) + geom_bar(stat="identity")+coord_flip()+ggtitle('Clases de enfermedades.')
+```
+
+Como podemos comprobar en la gráfica anterior, en este dataset reducido ya no hay clases mayoritarias ni minoritarias, si no que todas disponen del mismo número de muestras representativas. Por lo tanto, hemos conseguido obtener un conjunto de datos de entrenamiento equilibrado con 5.000 muestras.
+
+<reviews repetidas>
