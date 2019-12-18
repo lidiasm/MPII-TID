@@ -16,7 +16,7 @@ Para comenzar con el estudio estadístico cargamos los datos de entrenamiento.
 # Cargamos la biblioteca que utilizaremos para graficar los datos estadísticos.
 library(ggplot2)
 # Cargamos los datos de entrenamiento
-training_dataset <- read.csv(file="C:/Users/usuario/Desktop/TID/Prácticas/Dataset - Medicamentos/drugsComTrain_raw.csv", header=TRUE, sep=",")
+training_dataset <- read.csv(file="./drugsComTrain_raw.csv", header=TRUE, sep=",")
 ```
 
 A continuación presentamos las estadísticas que hemos pensado son más relevantes para nuestro dataset en particular. En primer lugar averiguamos las diez enfermedades más comunes que se encuentran registradas en nuestro conjunto de datos con el objetivo de visualizar aquellas dolencias que se presentan más frecuente en un centro sanitario.
@@ -252,6 +252,7 @@ Como podemos comprobar en la gráfica anterior, en este dataset reducido ya no h
 
 ## Análisis de correlación.
 
+En esta sección vamos a estudiar las relaciones que existen entre todas los campos de nuestro dataset para comprobar si algunos de ellos están correlacionados. Para ello vamos a convertir los atributos categóricos, como las enfermedades y los tratamientos, en valores numéricos sobre los que aplicar el estudio de la correlación. Sin embargo, campos como la fecha en la que se publicó la crítica del paciente así como esta misma, los vamos a omitir puesto que no tiene sentido intentar convertirlos en variables numéricas. 
 ```{r data processing}
 # Copio el dataset original en otro que modificaremos para este apartado.
 df_corr<-mini_training_dataset
@@ -267,44 +268,24 @@ df_corr["drugName"] <- transform(as.numeric(mini_training_dataset$drugName))
 # Calculo la matriz de correlación para las variables numéricas.
 matriz_correlacion<-cor(df_corr)#, method="spearman")
 # Calculamos los gráficos de dispersión y los coeficientes de correlación.
+library(PerformanceAnalytics)
 chart.Correlation(df_corr, histogram = F, pch = 19)
 # Graficamos los coeficientes de correlación para todas las variables evaluadas.
 library(corrplot)
 corrplot(matriz_correlacion, method="number", type="upper")
-
-# Test de la correlación enfermedades-medicamentos.
-# cor.test(df_corr$condition, df_corr$drugName)
-# # Gráfico de dispersión entre las enfermedades y los medicamentos
-# ggplot(data=mini_training_dataset, aes(x=df_corr$drugName, y=df_corr$condition), ylabel='Tratamientos', xlabel='Enfermedades', title='Diagrama de dispersión.') + geom_point()
-# 
-# # Test de la correlación rating-medicamentos
-# cor.test(df_corr$rating, df_corr$drugName)
-# # Gráfico de dispersión entre el rating y los medicamentos
-# ggplot(data=mini_training_dataset, aes(x=df_corr$drugName, y=df_corr$rating), ylabel='Tratamientos', xlabel='Enfermedades', title='Diagrama de dispersión.') + geom_point()
-# 
-# # COEFICIENTE DE CORRELACION DE PEARSON
-# # Enfermedades - medicamentos
-# library(PerformanceAnalytics)
-# dat1 <- data.frame(df_corr$condition, df_corr$drugName)
-# chart.Correlation(dat1)
-# 
-# # Rating - medicamentos
-# dat1 <- data.frame(df_corr$rating, df_corr$drugName)
-# chart.Correlation(dat1)
-# 
-# dat1 <- data.frame(df_corr$rating, df_corr$usefulCount)
-# chart.Correlation(dat1)
 ```
-Parece que no hay correlación entre ninguna de las variables exceptuando un poco más entre usefulCount y rating pero tampoco es significativo porque está bastante cerca de 0.
+En la primera imagen podemos comprobar los coeficientes de correlación entre cada par de variables existentes junto con la confianza asociada a esta correlación, representando la máxima con tres estrellas. Tal y como podemos comprobar, las variables que se encuentran más relacionadas son rating y usefulCount aunque su valor al ser de 0.24 no es considerablemente significante como para establecer una relación de correlación. Asimismo, si bien podemos pensar que los campos asociados a las enfermedades y a los tratamientos podrían mostrar una asociación, como podemos observar, esta no se hace patente a la hora de convertir los valores categóricos a numéricos puesto que de este modo el algoritmo no es capaz de relacionar ambos conceptos.
+
+En la segunda imagen podemos visualizar los coeficientes de correlación entre cada par de variables clasificados y coloreados en función de cuán fuerte es su asociación. Tal y como podemos comprobar, la relación de correlación más fuerte, y por ende, la que dispone de un color más definido, es la que hemos comentado anteriormente: rating-usefulCount. El resto de asociaciones no cuentan con valores significativos y por lo tanto, apenas son visibles en la gráfica.
   
 ## Análisis de la influencia de las variables.
 
 A continuación comprobaremos la importancia de cada uno de los campos que se incluyen en nuestro dataset. El objetivo es utilizar, solamente, aquellas columnas que sean relevantes para el estudio de este dataset en particular. Comenzamos eliminando directamente la columna uniqueID puesto que no aporta ningún tipo de información relevante ya que solo representa el identificador único para cada una de los registros del dataset.
 
-QUITAR TAMBIÉN LA FECHA
-
+Del mismo modo también vamos a eliminar el campo en el que se recoge la fecha en la que se creó la crítica puesto que tampoco nos aporta información útil para aplicar los sucesivos algoritmos.
 ```{r important fields}
 mini_training_dataset = mini_training_dataset[-1]
+mini_training_dataset = mini_training_dataset[-5]
 ```
 
 ## Algoritmos.
