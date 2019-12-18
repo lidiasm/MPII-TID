@@ -51,18 +51,65 @@ dataframe<-data.frame(medicamentos=medicamentos[1:10], recuento=recuento[1:10])
 ggplot(data=dataframe, aes(x=medicamentos, y=recuento)) + geom_bar(stat="identity")+coord_flip()+ggtitle('Medicamentos más comunes.')
 ```
 
-Una vez hemos exploradas las enfermedades y medicamentos más comunes, los dos siguientes datos estadísticos consisten en asociar estos dos factores con el objetivo de conocer qué enfermedades más comunes se encuentran asociadas a un medicamento y cuáles de los medicamentos más comunes son recetados para una misma enfermedad. En esta tercera estadística nos ocuparemos del primer caso. 
+Una vez hemos exploradas las enfermedades y medicamentos más comunes, los dos siguientes datos estadísticos consisten en asociar estos dos factores con el objetivo de conocer qué medicamentos más comunes se encuentran asociados a una misma enfermedad y cuáles de las enfermedades más comunes se encuentran asociadas para un mismo medicamento. En esta tercera estadística nos ocuparemos del primer caso. 
 ```{r training}
 # 3) Enfermedades comunes asociadas con un medicamento.
+# Partimos del mismo calculo que en el apartado anterior donde obtenemos los medicamentos mas comunes
+recuento_medicamentos<-summary(training_dataset$drugName)
+matriz_medicamentos<-data.matrix(recuento_medicamentos)
+medicamentos<-names(recuento_medicamentos)
+
+# Creo un dataframe vacio donde meter los medicamentos mas comunes con sus enfermedades
+dataframe_total<-data.frame()
+
+# Bucle que itera sobre los 5 medicamentos más comunes
+for(medicamento in medicamentos[1:5]){
+  # Extraigo las filas del medicamento en cuestión
+  df_medicamento<-training_dataset[training_dataset$drugName == medicamento, ]
+  # Apunto el número de veces que se repite cada enfermedad
+  recuento_enfermedades<-summary(df_medicamento$condition)
+  # Transformo el dataframe a matriz
+  enfermedades_matriz<-data.matrix(recuento_enfermedades)
+  # Apunto el nombre de las enfermedades asociado al recuento de estas
+  enfermedades<-names(recuento_enfermedades)
+  # También obtenemos el número de muestras de cada enfermedad
+  recuento<-enfermedades_matriz[1:length(enfermedades_matriz)]
+  # Creo un dataframe computesto por las 5 enfermedades más comunes con su número 
+  dataframe<-data.frame(enfermedades=enfermedades[1:5], recuento=recuento[1:5])
+  # Creo el título del gráfico
+  text <-(paste0('Enfermedades más comunes para ', medicamento))
+  # Creo el gráfico para ese medicamento
+  print(ggplot(data=dataframe, aes(x=enfermedades, y=recuento)) + geom_bar(stat="identity")+coord_flip()+ggtitle(text))
+}
+
 ```
 
-CONCLUSIONES
+Como podemos comprobar, los cinco medicamentos más comunes son especialmente recetados para paliar la enfermedad denominada Birth Control. Del mismo modo podemos observar que el resto de dolcencias asociadas a estos cinco tratamientos también están especializados en casos relacionados con la contracepción así como enfermedades asociadas con la menstruación y los órganos genitales femeninos. Esto nos indica que diversos tipos de dolencias, principalmente femeninas, pueden tratarse con los mismos medicamentos puesto que son indicados para un conjunto específico de dolencias de esta naturaleza en particular. Asimismo, podemos afirmar que si bien hemos comprobado que la enfermedad representada con un mayor número de muestras es Birth Control, tiene sentido que los cinco medicamentos más comunes estén dedicados a paliar esta dolencia, que también es sumamente común. Por tanto, podemos afirmar la relación existente entre los medicamentos más ampliamente recetados con las dolencias más altamente registradas.
+ 
+Para el siguiente caso realizaremos el mismo cálculo pero en orden inverso, es decir, comprobaremos cuáles son los medicamentos más comunes para una misma enfermedad. De este modo podremos observar los distintos tratamientos que se pueden aplicar a una misma enfermedad además de comprobar su popularidad a la hora de recetar cada uno de ellos.
 
 ```{r training}
 # 4) Medicamentos para cada enfermedad más común.
+# Realizamos el mismo calculo que en el apartado anterior pero adaptandolo al caso contrario
+recuento_enfermedades<-summary(training_dataset$condition)
+matriz_enfermedades<-data.matrix(recuento_enfermedades)
+enfermedades<-names(recuento_enfermedades)
+
+dataframe_total<-data.frame()
+for(enfermedad in enfermedades[1:5]){
+  df_enfermedades<-training_dataset[training_dataset$condition == enfermedad, ]
+  recuento_medicamentos<-summary(df_enfermedades$drugName)
+  medicamentos_matriz<-data.matrix(recuento_medicamentos)
+  medicamentos<-names(recuento_medicamentos)
+  recuento<-medicamentos_matriz[1:length(medicamentos_matriz)]
+  dataframe<-data.frame(medicamentos=medicamentos[1:5], recuento=recuento[1:5])
+  text <-(paste0('Medicamentos más comunes para ', enfermedad))
+  print(ggplot(data=dataframe, aes(x=medicamentos, y=recuento)) + geom_bar(stat="identity")+coord_flip()+ggtitle(text))
+}
+
 ```
 
-CONCLUSIONES
+En este caso, como se puede ver en las diferentes gráficas, los medicamentos se recetan de forma más distribuida, es decir para una misma enfermedad hay una mayor gama de tratamientos disponibles que se recetan con una frecuencia similar. Por lo tanto, no existen tratamientos recetados cláramente mayoritarios, como sucedía en el caso anterior.
 
 En el siguiente dato estadístico estudiaremos la valoración de los medicamentos para cada una de las diez enfermedades más comunes con el objetivo de conocer la eficacia, según los pacientes, de los tratamientos que en general se recetan para cada dolencia. 
 
@@ -168,7 +215,7 @@ Realizando el análisis exploratorio anterior, nos percatamos de que existen rev
 new_training_dataset<-training_dataset[!duplicated(training_dataset$review), ]
 # Comprobamos que no existen reviews repetidas.
 reviews_repetidas<-new_training_dataset[duplicated(new_training_dataset$review)]
-is_empty(reviews_repetidas)
+ncol(reviews_repetidas)
 ```
 Una vez hemos eliminado aquellos registros que disponen de la misma crítica, comenzaremos con el submuestreo del dataset para reducir su tamaño. Y es que, tal y como se ha podido comprobar en los resultados estadísticos anteriores, el número de muestras del conjunto de entrenamiento es bastante considerable. Asimismo, también hemos podido comprobar que existen clases de medicamentos con un número de muestras extremadamente mayoritario, como es 'Birth Control', por lo que no todas cuentan con la misma representación dentro del dataset. Es por ello por lo que, a continuación, se procede a aplicar un tratamiento consistente en reducir el conjunto de entrenamiento a 5.000 muestras. Para ello reduciremos el número de enfermedades a 10 y para cada una de ellas obtendremos 500 muestras. De este modo equilibramos las diversas clases de medicamentos existentes para, posteriormente, poder aplicar diversos algoritmos.
 
@@ -205,6 +252,59 @@ Como podemos comprobar en la gráfica anterior, en este dataset reducido ya no h
 
 ## Análisis de correlación.
 
+```{r data processing}
+# Copio el dataset original en otro que modificaremos para este apartado.
+df_corr<-mini_training_dataset
+# Eliminamos los campos categóricos puesto que vamos a convertir sus valores en valores numéricos.
+df_corr$drugName <- NULL
+df_corr$condition <- NULL
+# También eliminamos los campos review y date puesto que no los vamos a utilizar en esta sección.
+df_corr$review<-NULL
+df_corr$date<-NULL
+# Conversión de las variables categóricas, que son enfermedades y tratamientos, a variables numéricas.
+df_corr["condition"] <- transform(as.numeric(mini_training_dataset$condition))
+df_corr["drugName"] <- transform(as.numeric(mini_training_dataset$drugName))
+# Calculo la matriz de correlación para las variables numéricas.
+matriz_correlacion<-cor(df_corr)#, method="spearman")
+# Calculamos los gráficos de dispersión y los coeficientes de correlación.
+chart.Correlation(df_corr, histogram = F, pch = 19)
+# Graficamos los coeficientes de correlación para todas las variables evaluadas.
+library(corrplot)
+corrplot(matriz_correlacion, method="number", type="upper")
+
+# Test de la correlación enfermedades-medicamentos.
+# cor.test(df_corr$condition, df_corr$drugName)
+# # Gráfico de dispersión entre las enfermedades y los medicamentos
+# ggplot(data=mini_training_dataset, aes(x=df_corr$drugName, y=df_corr$condition), ylabel='Tratamientos', xlabel='Enfermedades', title='Diagrama de dispersión.') + geom_point()
+# 
+# # Test de la correlación rating-medicamentos
+# cor.test(df_corr$rating, df_corr$drugName)
+# # Gráfico de dispersión entre el rating y los medicamentos
+# ggplot(data=mini_training_dataset, aes(x=df_corr$drugName, y=df_corr$rating), ylabel='Tratamientos', xlabel='Enfermedades', title='Diagrama de dispersión.') + geom_point()
+# 
+# # COEFICIENTE DE CORRELACION DE PEARSON
+# # Enfermedades - medicamentos
+# library(PerformanceAnalytics)
+# dat1 <- data.frame(df_corr$condition, df_corr$drugName)
+# chart.Correlation(dat1)
+# 
+# # Rating - medicamentos
+# dat1 <- data.frame(df_corr$rating, df_corr$drugName)
+# chart.Correlation(dat1)
+# 
+# dat1 <- data.frame(df_corr$rating, df_corr$usefulCount)
+# chart.Correlation(dat1)
+```
+Parece que no hay correlación entre ninguna de las variables exceptuando un poco más entre usefulCount y rating pero tampoco es significativo porque está bastante cerca de 0.
+  
 ## Análisis de la influencia de las variables.
+
+A continuación comprobaremos la importancia de cada uno de los campos que se incluyen en nuestro dataset. El objetivo es utilizar, solamente, aquellas columnas que sean relevantes para el estudio de este dataset en particular. Comenzamos eliminando directamente la columna uniqueID puesto que no aporta ningún tipo de información relevante ya que solo representa el identificador único para cada una de los registros del dataset.
+
+QUITAR TAMBIÉN LA FECHA
+
+```{r important fields}
+mini_training_dataset = mini_training_dataset[-1]
+```
 
 ## Algoritmos.
