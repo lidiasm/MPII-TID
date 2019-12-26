@@ -5,7 +5,7 @@ date: "4/12/2019"
 output: html_document
 ---
 
-## Exploración de datos del conjunto de entrenamiento original.
+# Exploración de datos del conjunto de entrenamiento original.
 
 Este dataset que hemos seleccionado proporciona dos conjuntos, uno de entrenamiento y otro de prueba, en los que se recogen las opiniones de los pacientes, diagnosticados de una determinada enfermedad, acerca de los tratamientos que han probado. Existen dos tipos de opiniones, principalmente, una de ellas consiste en valorar el medicamento recetado para una enfermedad en concreto de 0 a 10. Por otro lado también se recopila, para cada opinión de un paciente, el número de personas que consideran que su crítica es útil. 
 
@@ -206,7 +206,7 @@ No sucede lo mismo con el segundo gráfico en el que se muestran los diez medica
 
 Por último, en el tercer gráfico podemos observar que se plantea la misma dinámica que en el primero, es decir, de nuevo existe un medicamento contra, en este caso, la ansiedad que tiene la mejor puntuación posible (10 de 10) y que es el más recetado.
 
-## Preprocesamiento de los datos.
+# Preprocesamiento de los datos.
 
 Realizando el análisis exploratorio anterior, nos percatamos de que existen reviews repetidas para una misma enfermedad. Creemos que es debido a que para una misma dolencia se han recetado varios medicamentos y cuando el paciente ha aportado su opinión, esta se ha asignado a cada uno de los tratamientos recetados para la misma enfermedad los cuales ocupan un registro distinto. Por ello, actualmente disponemos de reviews iguales para varias filas dentro del conjunto de datos de entrenamiento, asociadas a una misma enfermedad y a los diversos tratamientos recetados para paliarla. Con el objetivo de poder aplicar, posteriormente, los algoritmos vistos en esta asignatura y así obtener resultados representativos, vamos a aplicar un procesamiento equivalente a eliminar aquellos registros caracterizados por la misma fecha, enfermedad, puntuación del tratamiento, valoración de la crítica por otros pacientes pero con diferente tratamiento.  
 
@@ -250,7 +250,7 @@ ggplot(data=dataframe, aes(x=enfermedades, y=recuento)) + geom_bar(stat="identit
 
 Como podemos comprobar en la gráfica anterior, en este dataset reducido ya no hay clases mayoritarias ni minoritarias, si no que todas disponen del mismo número de muestras representativas. Por lo tanto, hemos conseguido obtener un conjunto de datos de entrenamiento equilibrado con 5.000 muestras, es decir, 500 muestras para cada etiqueta que representa cada una de las diez enfermedades más comunes.
 
-## Análisis de correlación.
+# Análisis de correlación.
 
 En esta sección vamos a estudiar las relaciones que existen entre todas los campos de nuestro dataset para comprobar si algunos de ellos están correlacionados. Para ello vamos a convertir los atributos categóricos, como las enfermedades y los tratamientos, en valores numéricos sobre los que aplicar el estudio de la correlación. Sin embargo, campos como la fecha en la que se publicó la crítica del paciente así como esta misma, los vamos a omitir puesto que no tiene sentido intentar convertirlos en variables numéricas. 
 ```{r data processing}
@@ -278,14 +278,46 @@ En la primera imagen podemos comprobar los coeficientes de correlación entre ca
 
 En la segunda imagen podemos visualizar los coeficientes de correlación entre cada par de variables clasificados y coloreados en función de cuán fuerte es su asociación. Tal y como podemos comprobar, la relación de correlación más fuerte, y por ende, la que dispone de un color más definido, es la que hemos comentado anteriormente: rating-usefulCount. El resto de asociaciones no cuentan con valores significativos y por lo tanto, apenas son visibles en la gráfica.
   
-## Análisis de la influencia de las variables.
+# Análisis de la influencia de las variables.
 
 A continuación comprobaremos la importancia de cada uno de los campos que se incluyen en nuestro dataset. El objetivo es utilizar, solamente, aquellas columnas que sean relevantes para el estudio de este dataset en particular. Comenzamos eliminando directamente la columna uniqueID puesto que no aporta ningún tipo de información relevante ya que solo representa el identificador único para cada una de los registros del dataset.
 
-Del mismo modo también vamos a eliminar el campo en el que se recoge la fecha en la que se creó la crítica puesto que tampoco nos aporta información útil para aplicar los sucesivos algoritmos.
+Del mismo modo también vamos a eliminar el campo en el que se recoge la fecha en la que se publicó la crítica puesto que tampoco nos aporta información útil para aplicar los sucesivos algoritmos.
 ```{r important fields}
 mini_training_dataset = mini_training_dataset[-1]
 mini_training_dataset = mini_training_dataset[-5]
 ```
 
-## Algoritmos.
+# Algoritmos.
+
+## Regresión lineal simple.
+
+En esta sección aplicaremos la regresión lineal simple consistente en generar un modelo de predicción que permita averiguar el valor de una determinada variable numérica en función de otra del mismo tipo. Para aplicar esta técnica vamos a añadir una nueva columna de clasificación binaria a nuestro dataset convirtiendo las puntuaciones de los medicamentos, que se encuentran en un rango entre 0 y 10, a dos valores binarios que representen la efectividad del tratamiento. El intervalo [0,4] corresponderá al valor 0 y por lo tanto representará que para un paciente en particular el medicamento no ha sido de ayuda, mientras que el intervalo [5-10] se corresponderá con el valor 1 que representará la eficacia del tratamiento.
+
+A continuación entrenamos un modelo de regresión simple cuya variable dependiente será el campo ratingBinaryLabel y la variable predictora será la categoría que contiene las puntuaciones originales de los tratamientos: rating. 
+
+```{r simple_regresion}
+# Recorremos las filas del conjunto de entrenamiento y comprobamos los valores en los intervalos definidos.
+for (i in 1:length(mini_training_dataset$rating)){
+  if (mini_training_dataset$rating[i] < 5)
+    mini_training_dataset$ratingLabel[i]<-0
+  else
+    mini_training_dataset$ratingLabel[i]<-1
+}
+# Especificamos la variable a predecir, que en nuestro caso será el campo binario relacionado con la efectividad del tratamiento, y la variable predictora que se corresponde con el campo de las puntuaciones originales de los medicamentos.
+modelo = mini_training_dataset$ratingLabel ~ mini_training_dataset$rating
+# Entrenamos el modelo.
+regresion_lineal = lm(modelo, mini_training_dataset)
+# Comprobamos los resultados del modelo.
+
+
+############################# EXPLICAR LOS RESULTADOS CON LA FUENTE: https://rpubs.com/osoramirez/316691
+##### INTENTAR EXPLICAR LAS GRÁFICAS QUE SE SACAN
+##### APLICAR EL MISMO TRATAMIENTO AL CONJUNTO DE TEST
+##### HACER UNA FUNCIÓN PARA MEDIR LOS ERRORES DEL MODELO CON EL TEST -> ANDREA / AA
+##### CURVA ROC
+summary(regresion_lineal)
+par(mfrow = c(2, 2))
+plot(regresion_lineal)
+# Verificamos su tasa de error con el conjunto de test.
+```
