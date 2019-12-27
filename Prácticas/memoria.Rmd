@@ -12,16 +12,17 @@ Este dataset que hemos seleccionado proporciona dos conjuntos, uno de entrenamie
 La elección de este dataset se fundamenta en diversos motivos. El más importante es que cumple con los requisitos establecidos por el profesor para, posteriormente, aplicar los algoritmos vistos en esta asignatura. Sin embargo, también tuvimos en cuenta la organización de competiciones de Machine Learning en las que se proponía este dataset como principal protagonista. 
 
 Para comenzar con el estudio estadístico cargamos los datos de entrenamiento.
-```{r training}
+```{r lectura_datos}
 # Cargamos la biblioteca que utilizaremos para graficar los datos estadísticos.
 library(ggplot2)
-# Cargamos los datos de entrenamiento
+# Cargamos los datos de entrenamiento y test
 training_dataset <- read.csv(file="./drugsComTrain_raw.csv", header=TRUE, sep=",")
+test_dataset <- read.csv(file="./drugsComTest_raw.csv", header=TRUE, sep=",")
 ```
 
 A continuación presentamos las estadísticas que hemos pensado son más relevantes para nuestro dataset en particular. En primer lugar averiguamos las diez enfermedades más comunes que se encuentran registradas en nuestro conjunto de datos con el objetivo de visualizar aquellas dolencias que se presentan más frecuente en un centro sanitario.
 
-```{r training}
+```{r estadisticas}
 # 1) Enfermedades más comunes.
 # Extraemos un resumen acerca de las enfermedades registradas.
 recuento_enfermedades<-summary(training_dataset$condition)
@@ -40,7 +41,7 @@ Tal y como se puede comprobar que la enfermedad *Birth Control* es consideráble
 
 A continuación realizaremos el mismo experimento en relación a los medicamentos con el fin de conocer cuáles son los más recetados de forma general.
 
-```{r training}
+```{r estadisticas}
 # 2) Medicamentos más comunes.
 # Repetimos el procedimiento anterior para los medicamentos.
 recuento_medicamentos<-summary(training_dataset$drugName)
@@ -52,7 +53,7 @@ ggplot(data=dataframe, aes(x=medicamentos, y=recuento)) + geom_bar(stat="identit
 ```
 
 Una vez hemos exploradas las enfermedades y medicamentos más comunes, los dos siguientes datos estadísticos consisten en asociar estos dos factores con el objetivo de conocer qué medicamentos más comunes se encuentran asociados a una misma enfermedad y cuáles de las enfermedades más comunes se encuentran asociadas para un mismo medicamento. En esta tercera estadística nos ocuparemos del primer caso. 
-```{r training}
+```{r estadisticas}
 # 3) Enfermedades comunes asociadas con un medicamento.
 # Partimos del mismo calculo que en el apartado anterior donde obtenemos los medicamentos mas comunes
 recuento_medicamentos<-summary(training_dataset$drugName)
@@ -84,11 +85,11 @@ for(medicamento in medicamentos[1:5]){
 
 ```
 
-Como podemos comprobar, los cinco medicamentos más comunes son especialmente recetados para paliar la enfermedad denominada Birth Control. Del mismo modo podemos observar que el resto de dolcencias asociadas a estos cinco tratamientos también están especializados en casos relacionados con la contracepción así como enfermedades asociadas con la menstruación y los órganos genitales femeninos. Esto nos indica que diversos tipos de dolencias, principalmente femeninas, pueden tratarse con los mismos medicamentos puesto que son indicados para un conjunto específico de dolencias de esta naturaleza en particular. Asimismo, podemos afirmar que si bien hemos comprobado que la enfermedad representada con un mayor número de muestras es Birth Control, tiene sentido que los cinco medicamentos más comunes estén dedicados a paliar esta dolencia, que también es sumamente común. Por tanto, podemos afirmar la relación existente entre los medicamentos más ampliamente recetados con las dolencias más altamente registradas.
+Como podemos comprobar, los cinco medicamentos más comunes son especialmente recetados para paliar la enfermedad denominada *Birth Control*. Del mismo modo podemos observar que el resto de dolcencias asociadas a estos cinco tratamientos también están especializados en casos relacionados con la contracepción así como enfermedades asociadas con la menstruación y los órganos genitales femeninos. Esto nos indica que diversos tipos de dolencias, principalmente femeninas, pueden tratarse con los mismos medicamentos puesto que son indicados para un conjunto específico de dolencias de esta naturaleza en particular. Asimismo, podemos afirmar que si bien hemos comprobado que la enfermedad representada con un mayor número de muestras es *Birth Control*, tiene sentido que los cinco medicamentos más comunes estén dedicados a paliar esta dolencia, que también es sumamente común. Por tanto, podemos afirmar la relación existente entre los medicamentos más ampliamente recetados con las dolencias más altamente registradas.
  
 Para el siguiente caso realizaremos el mismo cálculo pero en orden inverso, es decir, comprobaremos cuáles son los medicamentos más comunes para una misma enfermedad. De este modo podremos observar los distintos tratamientos que se pueden aplicar a una misma enfermedad además de comprobar su popularidad a la hora de recetar cada uno de ellos.
 
-```{r training}
+```{r estadisticas}
 # 4) Medicamentos para cada enfermedad más común.
 # Realizamos el mismo calculo que en el apartado anterior pero adaptandolo al caso contrario
 recuento_enfermedades<-summary(training_dataset$condition)
@@ -113,7 +114,7 @@ En este caso, como se puede ver en las diferentes gráficas, los medicamentos se
 
 En el siguiente dato estadístico estudiaremos la valoración de los medicamentos para cada una de las diez enfermedades más comunes con el objetivo de conocer la eficacia, según los pacientes, de los tratamientos que en general se recetan para cada dolencia. 
 
-```{r training}
+```{r estadisticas}
 # 5) Eficacia general de los tratamientos recetados para las diez enfermedades más comunes.
 # 5.1) Puntuación de los medicamentos asociados a "Birth Control".
 # Extraemos un dataset solo con los registros asociados a la enfermedad en cuestión.
@@ -158,11 +159,11 @@ adhd_dataset = subset(training_dataset, training_dataset$condition=="ADHD")
 print("Estadísticas sobre los medicamentos para 'ADHD'.")
 summary(adhd_dataset$rating)
 ```
-Como podemos comprobar en los resultados anteriores, si consideramos las medianas calculadas, es decir, la puntuación que se encuentra en la mitad del ranking, las enfermedades cuyos tratamientos, en general, son mejores valorados por los pacientes son Pain, Anxiety, Acne, Weight Loss y Obesity. Por el contrario, la que peor mediana tiene es Birth Control. Una de las ventajas de utilizar la mediana reside en la resistencia asociada a los valores de las puntuaciones, puesto que para calcularla lo único que se necesita es ordenar dichos valores y escoger el que se encuentra en la posición intermedia. Sin embargo, la media sí que se encuentra influida por los valores de las puntuaciones y, por lo tanto, se ve sesgada, principalmente, por los valores más bajos. Sin embargo, a través de esta variable estadística podemos confirmar las mismas conclusiones extraídas anteriormente, y además, nos permite agregar un mayor grado de concreción con respecto a los tratamientos mejor valorados. En este caso, podemos comprobar que la enfermedad cuyos tratamientos son mejor valorados es Weight Loss, seguida de Obesity y Anxiety.
+Como podemos comprobar en los resultados anteriores, si consideramos las medianas calculadas, es decir, la puntuación que se encuentra en la mitad del ranking, las enfermedades cuyos tratamientos, en general, son mejores valorados por los pacientes son *Pain, Anxiety, Acne, Weight Loss* y *Obesity*. Por el contrario, la que peor mediana tiene es *Birth Control*. Una de las ventajas de utilizar la mediana reside en la resistencia asociada a los valores de las puntuaciones, puesto que para calcularla lo único que se necesita es ordenar dichos valores y escoger el que se encuentra en la posición intermedia. Sin embargo, la media sí que se encuentra influida por los valores de las puntuaciones y, por lo tanto, se ve sesgada, principalmente, por los valores más bajos. Sin embargo, a través de esta variable estadística podemos confirmar las mismas conclusiones extraídas anteriormente, y además, nos permite agregar un mayor grado de concreción con respecto a los tratamientos mejor valorados. En este caso, podemos comprobar que la enfermedad cuyos tratamientos son mejor valorados es **Weight Loss, seguida de Obesity y Anxiety**.
 
 A continuación procedemos cuáles son los medicamentos más efectivos, según la población, para estas tres enfermedades, con el objetivo de conocer las puntuaciones de los tratamientos que han provocado los buenos resultados observados anteriormente. Sin embargo, como el número de registros para cada una de las enfermedades es sumamente considerable, vamos a agregar una segunda condición. Esta trata de conseguir los medicamentos que a su vez son los más recetados. De este modo podremos conocer cuáles son los tratamientos más efectivos, según los pacients afectados por las tres enfermedades anteriores, además de los más comúnmente recetados. Con todos estos criterios los resultados, para esta dolencia en concreto, se pueden visualizar a continuación.
 
-```{r training}
+```{r estadisticas}
 # 6) Medicamentos con mejores críticas y más veces recetados.
 # 6.1) Para la primera enfermedad: 'Weight Loss'.
 # Extraemos un dataset con las muestras asociadas solo a la enfermedad Weight Loss y con solamente los 
@@ -208,18 +209,26 @@ Por último, en el tercer gráfico podemos observar que se plantea la misma din�
 
 # Preprocesamiento de los datos.
 
-Realizando el análisis exploratorio anterior, nos percatamos de que existen reviews repetidas para una misma enfermedad. Creemos que es debido a que para una misma dolencia se han recetado varios medicamentos y cuando el paciente ha aportado su opinión, esta se ha asignado a cada uno de los tratamientos recetados para la misma enfermedad los cuales ocupan un registro distinto. Por ello, actualmente disponemos de reviews iguales para varias filas dentro del conjunto de datos de entrenamiento, asociadas a una misma enfermedad y a los diversos tratamientos recetados para paliarla. Con el objetivo de poder aplicar, posteriormente, los algoritmos vistos en esta asignatura y así obtener resultados representativos, vamos a aplicar un procesamiento equivalente a eliminar aquellos registros caracterizados por la misma fecha, enfermedad, puntuación del tratamiento, valoración de la crítica por otros pacientes pero con diferente tratamiento.  
+Realizando el análisis exploratorio anterior, nos percatamos de que existen **reviews repetidas para una misma enfermedad**. Creemos que es debido a que para una misma dolencia se han recetado varios medicamentos y cuando el paciente ha aportado su opinión, esta se ha asignado a cada uno de los tratamientos recetados para la misma enfermedad los cuales ocupan un registro distinto. Por ello, actualmente disponemos de reviews iguales para varias filas dentro del conjunto de datos de entrenamiento y de prueba, asociadas a una misma enfermedad y a los diversos tratamientos recetados para paliarla. Con el objetivo de poder aplicar, posteriormente, los algoritmos vistos en esta asignatura y así obtener resultados representativos, vamos a aplicar un procesamiento equivalente a eliminar aquellos registros que dispongan de la misma crítica tanto en el dataset de entrenamiento como en el de prueba. 
 
-```{r data processing}
+```{r procesamiento_datos}
+## Conjunto de entrenamiento
 # Eliminamos las filas que tengan la misma crítica.
 new_training_dataset<-training_dataset[!duplicated(training_dataset$review), ]
 # Comprobamos que no existen reviews repetidas.
 reviews_repetidas<-new_training_dataset[duplicated(new_training_dataset$review)]
 ncol(reviews_repetidas)
-```
-Una vez hemos eliminado aquellos registros que disponen de la misma crítica, comenzaremos con el submuestreo del dataset para reducir su tamaño. Y es que, tal y como se ha podido comprobar en los resultados estadísticos anteriores, el número de muestras del conjunto de entrenamiento es bastante considerable. Asimismo, también hemos podido comprobar que existen clases de medicamentos con un número de muestras extremadamente mayoritario, como es 'Birth Control', por lo que no todas cuentan con la misma representación dentro del dataset. Es por ello por lo que, a continuación, se procede a aplicar un tratamiento consistente en reducir el conjunto de entrenamiento a 5.000 muestras. Para ello reduciremos el número de enfermedades a 10 y para cada una de ellas obtendremos 500 muestras. De este modo equilibramos las diversas clases de medicamentos existentes para, posteriormente, poder aplicar diversos algoritmos.
 
-```{r data processing}
+## Conjunto de prueba.
+# Realizamos las mismas operaciones anteriores.
+new_test_dataset<-test_dataset[!duplicated(test_dataset$review), ]
+reviews_repetidas<-new_test_dataset[duplicated(new_test_dataset$review)]
+ncol(reviews_repetidas)
+```
+Una vez hemos eliminado aquellos registros que disponen de la misma crítica, comenzaremos con el submuestreo del dataset para **reducir su tamaño**. Y es que, tal y como se ha podido comprobar en los resultados estadísticos anteriores, el número de muestras del conjunto de entrenamiento es bastante considerable. Asimismo, también hemos podido comprobar que existen clases de medicamentos con un número de muestras extremadamente mayoritario, como es *Birth Control*, por lo que no todas cuentan con la misma representación dentro del dataset. Es por ello por lo que, a continuación, se procede a aplicar un tratamiento consistente en reducir el conjunto de entrenamiento a 5.000 muestras. Para ello reduciremos el **número de enfermedades a 10 y para cada una de ellas obtendremos 500 muestras**. De este modo equilibramos las diversas clases de medicamentos existentes para, posteriormente, poder aplicar diversos algoritmos.
+
+```{r procesamiento_datos}
+## CONJUNTO DE ENTRENAMIENTO
 # Obtenemos un resumen acerca de las enfermedades registradas en el dataset.
 recuento_etiquetas<-summary(new_training_dataset$condition)
 # Recopilamos los nombres de las enfermedades.
@@ -245,15 +254,47 @@ enfermedades_matriz<-data.matrix(recuento_enfermedades)
 enfermedades<-names(recuento_enfermedades)
 recuento<-enfermedades_matriz[1:length(enfermedades_matriz)]
 dataframe<-data.frame(enfermedades=enfermedades[1:10], recuento=recuento[1:10])
-ggplot(data=dataframe, aes(x=enfermedades, y=recuento)) + geom_bar(stat="identity")+coord_flip()+ggtitle('Clases de enfermedades.')
+ggplot(data=dataframe, aes(x=enfermedades, y=recuento)) + geom_bar(stat="identity")+coord_flip()+ggtitle('Clases de enfermedades del conjunto de entrenamiento.')
 ```
 
 Como podemos comprobar en la gráfica anterior, en este dataset reducido ya no hay clases mayoritarias ni minoritarias, si no que todas disponen del mismo número de muestras representativas. Por lo tanto, hemos conseguido obtener un conjunto de datos de entrenamiento equilibrado con 5.000 muestras, es decir, 500 muestras para cada etiqueta que representa cada una de las diez enfermedades más comunes.
 
+Del mismo modo procedemos con el **conjunto de prueba** de modo que también cuente con hasta 10 enfermedades diferentes con 500 muestras para cada una de ellas. Para ello repetiremos el mismo proceso anterior.
+
+```{r procesamiento_datos}
+## CONJUNTO DE PRUEBA
+# Obtenemos un resumen acerca de las enfermedades registradas en el dataset.
+recuento_etiquetas<-summary(new_test_dataset$condition)
+# Recopilamos los nombres de las enfermedades.
+etiquetas<-names(recuento_etiquetas)
+# Formamos un dataset más pequeño con las 10 enfermedades con mayor número de ejemplos y les asociamos 500 muestras para cada una.
+n_enfermedades_max = 10
+n_muestras_max = 500
+# Primera enfermedad
+mini_test_dataset <- head(subset(new_test_dataset, new_test_dataset$condition==etiquetas[1]), n_muestras_max)
+# Resto de enfermedades
+for (i in c(2:n_enfermedades_max)) {
+  mini_test_dataset <- rbind(mini_test_dataset, head(subset(new_test_dataset,
+    new_test_dataset$condition==etiquetas[i]), n_muestras_max))
+}
+# Desorganizamos los datos
+set.seed(42)
+rows<-sample(nrow(mini_test_dataset))
+mini_test_dataset<-mini_test_dataset[rows,]
+
+# Repetimos el proceso que se ha aplicado anteriormente para la obtención de ciertas estadísticas para comprobar que realmente el nuevo conjunto de entrenamiento reducido está balanceado.
+recuento_enfermedades<-summary(mini_test_dataset$condition)
+enfermedades_matriz<-data.matrix(recuento_enfermedades)
+enfermedades<-names(recuento_enfermedades)
+recuento<-enfermedades_matriz[1:length(enfermedades_matriz)]
+dataframe<-data.frame(enfermedades=enfermedades[1:10], recuento=recuento[1:10])
+ggplot(data=dataframe, aes(x=enfermedades, y=recuento)) + geom_bar(stat="identity")+coord_flip()+ggtitle('Clases de enfermedades del conjunto de prueba.')
+```
+
 # Análisis de correlación.
 
 En esta sección vamos a estudiar las relaciones que existen entre todas los campos de nuestro dataset para comprobar si algunos de ellos están correlacionados. Para ello vamos a convertir los atributos categóricos, como las enfermedades y los tratamientos, en valores numéricos sobre los que aplicar el estudio de la correlación. Sin embargo, campos como la fecha en la que se publicó la crítica del paciente así como esta misma, los vamos a omitir puesto que no tiene sentido intentar convertirlos en variables numéricas. 
-```{r data processing}
+```{r correlacion}
 # Copio el dataset original en otro que modificaremos para este apartado.
 df_corr<-mini_training_dataset
 # Eliminamos los campos categóricos puesto que vamos a convertir sus valores en valores numéricos.
@@ -274,29 +315,33 @@ chart.Correlation(df_corr, histogram = F, pch = 19)
 library(corrplot)
 corrplot(matriz_correlacion, method="number", type="upper")
 ```
-En la primera imagen podemos comprobar los coeficientes de correlación entre cada par de variables existentes junto con la confianza asociada a esta correlación, representando la máxima con tres estrellas. Tal y como podemos comprobar, las variables que se encuentran más relacionadas son rating y usefulCount aunque su valor al ser de 0.24 no es considerablemente significante como para establecer una relación de correlación. Asimismo, si bien podemos pensar que los campos asociados a las enfermedades y a los tratamientos podrían mostrar una asociación, como podemos observar, esta no se hace patente a la hora de convertir los valores categóricos a numéricos puesto que de este modo el algoritmo no es capaz de relacionar ambos conceptos.
+En la primera imagen podemos comprobar los coeficientes de correlación entre cada par de variables existentes junto con la confianza asociada a esta correlación, representando la máxima con tres estrellas. Tal y como podemos comprobar, las variables que se encuentran más relacionadas son *rating* y *usefulCount* aunque su valor al ser de 0.24 no es considerablemente significante como para establecer una relación de correlación. Asimismo, si bien podemos pensar que los campos asociados a las enfermedades y a los tratamientos podrían mostrar una asociación, como podemos observar, esta no se hace patente a la hora de convertir los valores categóricos a numéricos puesto que de este modo el algoritmo no es capaz de relacionar ambos conceptos.
 
-En la segunda imagen podemos visualizar los coeficientes de correlación entre cada par de variables clasificados y coloreados en función de cuán fuerte es su asociación. Tal y como podemos comprobar, la relación de correlación más fuerte, y por ende, la que dispone de un color más definido, es la que hemos comentado anteriormente: rating-usefulCount. El resto de asociaciones no cuentan con valores significativos y por lo tanto, apenas son visibles en la gráfica.
+En la segunda imagen podemos visualizar los coeficientes de correlación entre cada par de variables clasificados y coloreados en función de cuán fuerte es su asociación. Tal y como podemos comprobar, la relación de correlación más fuerte, y por ende, la que dispone de un color más definido, es la que hemos comentado anteriormente: *rating-usefulCount*. El resto de asociaciones no cuentan con valores significativos y por lo tanto, apenas son visibles en la gráfica.
   
 # Análisis de la influencia de las variables.
 
-A continuación comprobaremos la importancia de cada uno de los campos que se incluyen en nuestro dataset. El objetivo es utilizar, solamente, aquellas columnas que sean relevantes para el estudio de este dataset en particular. Comenzamos eliminando directamente la columna uniqueID puesto que no aporta ningún tipo de información relevante ya que solo representa el identificador único para cada una de los registros del dataset.
-
+A continuación comprobaremos la importancia de cada uno de los campos que se incluyen en nuestro dataset. El objetivo es utilizar, solamente, aquellas columnas que sean relevantes para el estudio de este dataset en particular. Comenzamos eliminando directamente la columna *uniqueID* en ambos conjuntos de datos puesto que no aporta ningún tipo de información relevante ya que solo representa el identificador único para cada una de los registros del dataset.
 Del mismo modo también vamos a eliminar el campo en el que se recoge la fecha en la que se publicó la crítica puesto que tampoco nos aporta información útil para aplicar los sucesivos algoritmos.
-```{r important fields}
+```{r influencia_variables}
+## CONJUNTO DE ENTRENAMIENTO
 mini_training_dataset = mini_training_dataset[-1]
 mini_training_dataset = mini_training_dataset[-5]
+
+## CONJUNTO DE PRUEBA
+mini_test_dataset = mini_test_dataset[-1]
+mini_test_dataset = mini_test_dataset[-5]
 ```
 
 # Algoritmos.
 
 ## Regresión lineal simple.
 
-En esta sección aplicaremos la regresión lineal simple consistente en generar un modelo de predicción que permita averiguar el valor de una determinada variable numérica en función de otra del mismo tipo. Para aplicar esta técnica vamos a añadir una nueva columna de clasificación binaria a nuestro dataset convirtiendo las puntuaciones de los medicamentos, que se encuentran en un rango entre 0 y 10, a dos valores binarios que representen la efectividad del tratamiento. El intervalo [0,4] corresponderá al valor 0 y por lo tanto representará que para un paciente en particular el medicamento no ha sido de ayuda, mientras que el intervalo [5-10] se corresponderá con el valor 1 que representará la eficacia del tratamiento.
+En esta sección aplicaremos la **regresión lineal simple** consistente en generar un modelo de predicción que permita averiguar el valor de una determinada variable numérica en función de otra del mismo tipo. Para aplicar esta técnica vamos a añadir una nueva columna de clasificación binaria a nuestro dataset convirtiendo las puntuaciones de los medicamentos, que se encuentran en un rango entre 0 y 10, a dos valores binarios que representen la efectividad del tratamiento. El intervalo [0,4] corresponderá al valor 0 y por lo tanto representará que para un paciente en particular el medicamento no ha sido de ayuda, mientras que el intervalo [5-10] se corresponderá con el valor 1 que representará la eficacia del tratamiento.
 
 A continuación entrenamos un modelo de regresión simple cuya variable dependiente será el campo ratingBinaryLabel y la variable predictora será la categoría que contiene las puntuaciones originales de los tratamientos: rating. 
 
-```{r simple_regresion}
+```{r regresion_lineal_simple}
 # Recorremos las filas del conjunto de entrenamiento y comprobamos los valores en los intervalos definidos.
 for (i in 1:length(mini_training_dataset$rating)){
   if (mini_training_dataset$rating[i] < 5)
@@ -304,20 +349,96 @@ for (i in 1:length(mini_training_dataset$rating)){
   else
     mini_training_dataset$ratingLabel[i]<-1
 }
+# Realizamos el mismo procedimiento para el conjunto de test.
+for (i in 1:length(mini_test_dataset$rating)){
+  if (mini_test_dataset$rating[i] < 5)
+    mini_test_dataset$ratingLabel[i]<-0
+  else
+    mini_test_dataset$ratingLabel[i]<-1
+}
+
 # Especificamos la variable a predecir, que en nuestro caso será el campo binario relacionado con la efectividad del tratamiento, y la variable predictora que se corresponde con el campo de las puntuaciones originales de los medicamentos.
 modelo = mini_training_dataset$ratingLabel ~ mini_training_dataset$rating
 # Entrenamos el modelo.
 regresion_lineal = lm(modelo, mini_training_dataset)
 # Comprobamos los resultados del modelo.
-
-
-############################# EXPLICAR LOS RESULTADOS CON LA FUENTE: https://rpubs.com/osoramirez/316691
-##### INTENTAR EXPLICAR LAS GRÁFICAS QUE SE SACAN
-##### APLICAR EL MISMO TRATAMIENTO AL CONJUNTO DE TEST
-##### HACER UNA FUNCIÓN PARA MEDIR LOS ERRORES DEL MODELO CON EL TEST -> ANDREA / AA
-##### CURVA ROC
 summary(regresion_lineal)
-par(mfrow = c(2, 2))
-plot(regresion_lineal)
-# Verificamos su tasa de error con el conjunto de test.
 ```
+Tal y como podemos comprobar en el resumen estadístico mostrado en primer lugar, el modelo predictivo es confiable en tanto en cuanto su p-value tanto en el origen como en la pendiente es menor que 0.05. Además, observando el valor del atributo *Multiple R^2* podemos determinar que el modelo es capaz de predecir hasta un 80% de valores del campo *ratingLabel* mediante el atributo *rating*. Para ello aplica la siguiente ecuación, que se obtiene del *intercepto* y de la pendiente calculados préviamente: `rating_binario = -0.0684667 + 0.1173970 * rating_original`. Su interpretación reside en que por cada incremento en una unidad de la variable *rating* se corresponde a 0.117 del valor de *ratingLabel*. 
+
+Sin embargo, para medir la bondad del modelo de una forma más precisa y tradicional, procedemos a definir la siguiente función que es capaz de calcular las predicciones realizadas por el modelo entrenado préviamente, tanto para el conjunto de entrenamiento como para el de test, para posteriormente calcular ambas **tasas de error**. Encapsulamos el código referente a este procedimiento en una función puesto que así podremos reutilizarlo más adelante en los sucesivos modelos de regresión que aplicaremos a nuestro dataset.
+
+```{r regresion_lineal_simple}
+# Función que recibe el modelo de regresión entrenado para realizar las predicciones tanto del conjunto de prueba como del conjunto de entrenamiento y calcula ambas tasas de error. 
+evaluar_modelo_regresion<-function(modelo) {
+  # Calculamos la probabilidad de cada muestra de pertenecer a una clase u a otra.
+  train_probab<-predict(modelo, mini_training_dataset, type="response")
+  test_probab<-predict(modelo, mini_test_dataset, type="response")
+  # Inicializamos todas las etiquetas a 0.
+  train_predicc<-rep(0, length(train_probab))
+  test_predicc<-rep(0, length(test_probab))
+  
+  # En función de las probabilidades calculadas anteriormente clasficaremos el resto de muestras pertenecientes a la clase cuya etiqueta binaria es 1. Para ello consideramos que una muestra pertenece a esta clase si su probabilidad es mayor o igual a 0.5.
+  train_predicc[train_probab >= .5] = 1
+  test_predicc[test_probab >= .5] = 1
+  # Mostramos la matriz de confusión que nos aportará más información acerca de los falsos positivos.
+  cat("Matriz de confusión.\n")
+  print(table(pred=test_predicc, real=mini_test_dataset$ratingLabel))
+  
+  # Ahora calculamos la tasa de error en % para cada conjunto.
+  train_error = mean(train_predicc != mini_training_dataset$ratingLabel)
+  test_error = mean(test_predicc != mini_test_dataset$ratingLabel)
+  cat("\nTasa de error en entrenamiento:",train_error*100,"%")
+  cat("\nTasa de error en prueba:",test_error*100,"%")
+} 
+
+evaluar_modelo_regresion(regresion_lineal)
+```
+Tal y como podemos comprobar, la **tasa de error sobre el conjunto de entrenamiento**, como era de esperar es bastante pequeña. Sin embargo, el hecho de que sea 0% no es favorable puesto que, por el contrario, **el error en el conjunto de prueba** es considerablemente alto, por lo tanto podemos reflexionar acerca de si el modelo se ha ajustado demasiado a los datos de entrenamiento y por ello su capacidad de generalización es menor. 
+Asimismo, si analizamos la matriz de confusión, podemos comprobar que existe una alta tasa de errores al clasificar muestras en la categoría 1 mientras que en realidad pertenecen a la clase cuya etiqueta es 0, y viceversa. Con el objetivo de evaluar la calidad del modelo entrenado procedemos a representar la **curva ROC** así como estimar el área existente debajo de la misma.
+```{r regresion_lineal_simple}
+# Función que realiza las predicciones con la función del paquete asociado a la curva ROC para posteriormente pintarla.
+library("ROCR")
+curvaROC<-function(modelo, etiquetas) { 
+  # Obtenemos las predicciones.
+  predicciones<-prediction(modelo, etiquetas)
+  # Calculamos el rendimiento del modelo teniendo en cuenta los falsos positivos y los aciertos.
+  curva<-performance(predicciones, "tpr", "fpr")
+  # Dibujamos la curva.
+  plot(curva, col="green", add=FALSE, main="Curva ROC. Regresión Lineal.", lwd = 2) 
+  segments(0, 0, 1, 1, col='black')
+  grid() 
+  # Calculamos el área debajo de la curva
+  curva.area = performance(predicciones, "auc")
+  cat("\nEl área bajo la curva ROC es", curva.area@y.values[[1]]*100,"%\n")
+}
+
+# Curva ROC para el conjunto de prueba
+test_probab = predict(regresion_lineal, mini_test_dataset, type=c("response"))
+curvaROC(test_probab, mini_test_dataset$ratingLabel)
+```
+Como podemos comprobar la curva ROC es prácticamente lineal y por ende el área bajo ella es bastante escasa. Este aspecto nos indica que la capacidad de generalización del modelo entrenado es bastante escasa, con lo que explica la tasa de error tan elevada sobre el conjunto de prueba que hemos obtenido préviamente. 
+
+### Regresión lineal robusta
+
+En esta subsección trataremos de entrenar un modelo predictivo lineal utilizando, para ello, una subtécnica de la anterior denominada **regresión robusta**. Esta técnica presenta ciertas ventajas como la independencia a los *valores atípicos*, los cuales son datos que no siguen el patrón del resto y por lo tanto sus valores son muy dispares. Con este modelo pretendemos mejorar los resultados del anterior así como obtener tasas de error más confiables y robustas. 
+
+```{r regresion_lineal_robusta}
+# Cargamos la librería que nos permitirá entrenar un modelo con esta técnica.
+library(MASS)
+# Entrenamos el modelo.
+modelo = mini_training_dataset$ratingLabel ~ mini_training_dataset$rating
+regresion_robusta = rlm(modelo, mini_training_dataset)
+# Obtenemos un resumen estadístico acerca del modelo entrenado.
+summary(regresion_robusta)
+# Comprobamos la tasa de error sobre el conjunto de entrenamiento y de prueba.
+evaluar_modelo_regresion(regresion_robusta)
+# Dibujamos su curva ROC
+test_probab = predict(regresion_robusta, mini_test_dataset, type=c("response"))
+curvaROC(test_probab, mini_test_dataset$ratingLabel)
+```
+Tal y como podemos observar en los resultados, el modelo entrenado con *regresión lineal robusta* no proporciona una mejora significativa puesto que tanto las tasas de error sobre ambos conjuntos como el área de la curva ROC siguen indicando que el modelo dispone de una capacidad de generalización bastante escasa. Por lo tanto, podemos concluir que para nuestro dataset un modelo entrenado mediante regresión lineal simple para predecir la efectividad de los tratamientos en función de su puntuación original, no es aconsejable puesto que no llega a tener una buena capacidad de predicción.
+
+## Regresión logística.
+
+
