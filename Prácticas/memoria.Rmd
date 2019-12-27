@@ -2,8 +2,36 @@
 title: "Memoria de las prácticas de Tratamiento Inteligente de Datos."
 author: "Lidia Sánchez Mérida, Fernando Roldán Zafra."
 date: "4/12/2019"
-output: html_document
+output:
+  pdf_document:
+    keep_tex: true
+lang: es-ES
 ---
+<!------------------------ PORTADA --------------------->
+\thispagestyle{empty}
+
+\begin{center} \huge \textbf{Tratamiento Inteligente de Datos} \end{center}
+\vspace{0.3cm}
+\begin{center} \Large \textbf{\textsc{Memoria de las prácticas de la asignatura}} \end{center}
+\vspace{0.2cm}
+\begin{center} \large \textbf{2019-2020} \end{center}
+
+\vspace{2.5cm}
+
+\hspace{8.5cm}{Lidia Sánchez Mérida.}
+
+\vspace{0.15cm}
+
+\hspace{8.5cm}{Fernando Roldán Zafra.}
+
+\vspace{0.15cm}
+
+\newpage
+<!---------------- ÍNDICE DE CONTENIDOS ---------------->
+\thispagestyle{empty}
+\tableofcontents
+\newpage
+<!------------------------------------------------------>
 
 # Exploración de datos del conjunto de entrenamiento original.
 
@@ -439,6 +467,52 @@ curvaROC(test_probab, mini_test_dataset$ratingLabel)
 ```
 Tal y como podemos observar en los resultados, el modelo entrenado con *regresión lineal robusta* no proporciona una mejora significativa puesto que tanto las tasas de error sobre ambos conjuntos como el área de la curva ROC siguen indicando que el modelo dispone de una capacidad de generalización bastante escasa. Por lo tanto, podemos concluir que para nuestro dataset un modelo entrenado mediante regresión lineal simple para predecir la efectividad de los tratamientos en función de su puntuación original, no es aconsejable puesto que no llega a tener una buena capacidad de predicción.
 
-## Regresión logística.
+## Regresión logística simple
 
+Aplicaremos esta técnica con el objetivo de entrenar un modelo predictivo capaz de averiguar, para cada muestra, la clase binaria a la que pertenece el tratamiento: 0 (no efectivo) o 1 (efectivo). Para ello se realizará un procedimiento similar al anterior solo que en este caso utilizaremos la función correspondiente a la **regresión logística** para llevar a cabo el entrenamiento del sistema. 
 
+```{r regresion_logistica}
+# Entrenamos un modelo predictivo con regresión logística. Para ello especificamos como variable dependiente la que deseamos predecir, que en nuestro caso será ratingLabel, y como variable predictora la puntuación original en el intervalo [0, 10].
+regresion_logistica = glm(ratingLabel~rating, family=binomial(logit), data=mini_training_dataset)
+# Resumen acerca del modelo entrenado.
+summary(regresion_logistica)
+# Evaluación del modelo entrenado.
+evaluar_modelo_regresion(regresion_logistica)
+```
+Tal y como podemos comprobar el modelo entrenado con la técnica actual no es confiable puesto que ambos campos tienen un p-value muy cercano a 1, por lo que podemos concluir que no puede ser predicha la etiqueta binaria mediante las puntuaciones originales de forma lineal.
+
+## Regresión polinomial
+
+Si bien los resultados de los modelos predictivos entrenados mediante técnicas lineales no han sido buenos, vamos a aplicar una técnica no lineal con el objetivo de comprobar si la varible binaria *ratingLabel* puede ser predicha mediante modelo polinómico. Para aplicar esta técnica es indispensable incluir algunos componentes no  lineales, como pueden ser nuevos predictores obtenidos a partir de aplicar técnicas sobre los originales como elevarlos a una potencia. Comenzaremos utilizando un polinomio de grado 2, para lo que necesitaremos incluir la variable *rating*, con la que intentamos predecir la clase a la que pertenece cada tratamiento, elevada al cuadrado de la siguiente forma.
+```{r regresion_polinomial}
+# Entrenamos el modelo con regresión polinomial estableciendo un polinomio de grado 2.
+regresion_polinomica = lm(formula=ratingLabel~poly(rating, 2), data=mini_training_dataset)
+# Estudiamos el modelo entrenado.
+summary(regresion_polinomica)
+# Calculamos las tasas de error sobre entrenamiento y prueba.
+evaluar_modelo_regresion(regresion_polinomica)
+```
+
+Como podemos observar en el estudio del modelo entrenado los *p-values* de todos los componentes son bastante bajos por lo que podemos determinar que este nuevo modelo predictivo es confiable y es suficiente utilizar un polinomio de orden 2. Asimismo también podemos concluir que la variable *rating* está relacionada con la que intentamos predecir: *ratingLabel*. También podemos comprobar una mejoría sobre los resultados mostrados en la matriz de confusión puesto que el número de muestras erróneamente clasificadas ha descendido considerablemente, comparado con los anteriores modelos lineales. Este mismo hecho se demuestra al evaluar el modelo predictivo y obtener las tasas de error tanto en el conjunto de entrenamiento como en el de prueba, ya que como podemos observar, los errores entran dentro de un rango razonable. 
+
+A continuación procedemos a representar gráficamente la curva que describe el polinomio calculado para entrenar dicho modelo. Para ello, en primer lugar, debemos de obtener las predicciones para la etiqueta binaria mediante la interpolación de puntos dentro del rango del campo predictor. A mayor número de puntos, más precisa será la representación gráfica.
+
+```{r regresion_polinomial}
+# Interpolación de puntos dentro del rango del campo rating
+rango<-range(mini_training_dataset$rating)
+puntos<-seq(from=rango[1], to=rango[2], by=1)
+puntos<-data.frame(rating=puntos)
+# Predicción de la etiqueta binaria y cálculo del error estándar del modelo. Para ello se establece un 95% de confianza.
+predicciones<-predict(regresion_polinomica, newdata=puntos, se.fit=TRUE, level=0.95)
+# Cálculo del intervalo de confianza superior e inferior al 95%.
+intervalo_confianza<-data.frame(inferior=predicciones$fit-1.96*predicciones$se.fit, superior=predicciones$fit+1.96*predicciones$se.fit)
+attach(mini_training_dataset)
+plot(x=rating, y=ratingLabel, pch = 20, col = "darkgrey")
+title("Polinomio de grado 2: ratingLabel~rating.")
+lines(x = puntos$rating, predicciones$fit, col = "red", pch = 20)
+lines(x = puntos$rating, intervalo_confianza$inferior, col = "blue", pch = 4)
+lines(x = puntos$rating, intervalo_confianza$superior, col = "blue", pch = 4)
+```
+En esta gráfica queda cláramente representada la relación existente entre la variable *rating* y la etiqueta binaria que deseamos predecir *ratingLabel*. Esta relación consiste en que a mayor puntuación, mayor es la efectividad del tratamiento y por lo tanto se encuentra dentro de la categorái de medicamentos efectivos. 
+
+En base a los estudios realizados con diversas variantes de la regresión, podemos determinar que la **regresión polinómica** ha sido el único con el que hemos obtenido un modelo competitivo, confiable y capaz de clasificar correctamente los tratamientos en efectivos o no efectivos en base a la puntuación, entre 0 y 10, asociada por cada uno de los pacientes afectados. Con ello podemos concluir que nuestro problema **no es lineal*, y por lo tanto no se puede entrenar un modelo lineal para realizar una buena predicción.
