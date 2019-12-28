@@ -403,9 +403,44 @@ test_reviews_matriz<-DocumentTermMatrix(test_reviews_corpus)
 ```
 Tras la aplicación de esta última técnica podemos comprobar que se ha producido una reducción razonable de términos pasando a tener menos de 8.500 en total. Asimismo, podemos observar una mejora en relación a los términos más frecuentes puesto que todos ellos son diferentes y por lo tanto todos pueden aportar información relevante a la hora de aplicar los sucesivos algoritmos a lo largo de este documento.
 
-### Nube de palabras
+## Nube de palabras
 
+Una vez disponemos de los datos preprocesados, tanto asociados al conjunto de entrenamiento como al de prueba, procedemos a representar gráficamente los términos obtenidos de los diversos documentos mediante una primera **nube de palabras**, en la cual se ordenarán las palabras de las críticas de los pacientes en función de su número de apariciones. De este modo podremos conocer los términos más utilizados en las *reviews*. Estos serán representados en un mayor tamaño y se irá reduciendo conforme disminuya el número de veces que aparece cada uno de los términos.
+```{r nube_palabras_apariciones}
+library(wordcloud2)
+library(knitr)
+# train_reviews_dataframe<-as.data.frame(as.matrix(train_reviews_matriz))
+# colnames(train_reviews_dataframe)<-make.names(colnames(train_reviews_dataframe))
+# frecuencia_terminos<-colSums(train_reviews_dataframe)
+# frecuencia_terminos<-frecuencia_terminos[order(frecuencia_terminos, decreasing = T)]
+#wordcloud(freq = as.vector(frecuencia_terminos), words = names(frecuencia_terminos),random.order = FALSE, colors = brewer.pal(8, 'Dark2'),max.words=100)
 
+# Convertimos el corpus en una matriz de documentos cuyas filas serán los términos que aparecen en cada uno de ellos.
+train_reviews_matriz_terminos<-as.matrix(TermDocumentMatrix(train_reviews_corpus))
+# Convertimos la colección de documentos en una matriz para operar con ella.
+#m <- as.matrix(tdm) #lo vuelve una matriz
+# Ordenamos los términos en función de sus apariciones totales.
+frecuencia_terminos<-sort(rowSums(train_reviews_matriz_terminos), decreasing=TRUE)
+# Obtenemos un dataframe de los términos ordenados para poder representar la nube de palabras.
+train_reviews_dataframe_ordenado<-data.frame(word=names(frecuencia_terminos), freq=frecuencia_terminos)
+wordcloud2(train_reviews_dataframe_ordenado, size=1.2)
+```
+Tal y como podemos apreciar algunos de los términos más usados en las críticas de los pacientes son *take*, *day*, *feel*, *start*, entre otros. No obstante, si ordenásemos los términos en función de su semántica nos sería de mayor utilidad puesto que nos aportaría una idea acerca de si la mayoría de las palabras contenidas en las *reviews* de los pacientes hacen referencia a una crítica positiva o negativa. 
+
+```{r nube_palabras_sentimientos}
+# library(tidyverse)
+# library(readr)
+# library(RColorBrewer)
+# library(tidytext)
+# # Convertimos el corpus a una matriz.
+# drugstext<-unnest_tokens(mini_training_dataset, word, items)
+# binarytextscore<-get_sentiments(lexicon = "bing")
+# res <- drugstext %>%
+#     inner_join(binarytextscore, by = "word") %>%
+#      count(word, sentiment) %>%
+#      mutate(color = ifelse(sentiment == "positive", "darkgreen", "red"))
+# wordcloud(res$word, res$n, random.order = FALSE, colors = res$color, ordered.colors = TRUE)
+```
 
 # Análisis de correlación.
 
@@ -448,6 +483,10 @@ mini_training_dataset = mini_training_dataset[-5]
 mini_test_dataset = mini_test_dataset[-1]
 mini_test_dataset = mini_test_dataset[-5]
 ```
+
+# Análisis de sentimientos
+
+De las opiniones de los pacientes
 
 # Algoritmos.
 
