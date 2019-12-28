@@ -319,6 +319,94 @@ dataframe<-data.frame(enfermedades=enfermedades[1:10], recuento=recuento[1:10])
 ggplot(data=dataframe, aes(x=enfermedades, y=recuento)) + geom_bar(stat="identity")+coord_flip()+ggtitle('Clases de enfermedades del conjunto de prueba.')
 ```
 
+## Preprocesamiento de datos textuales.
+
+En este subapartado procedemos a aplicar diversas técnicas para preparar los datos textuales, en especial las *reviews* de los pacientes, para que posteriormente podamos aplicar ciertos algoritmos con mayor facilidad. En primer lugar vamos a crear los vectores de documentos a partir de la columna anteriormente mencionada. Para ello convertiremos cada una de las críticas de los pacientes en un documento y las almacenaremos en un vector común. 
+
+```{r corpus}
+# Cargamos el paquete que nos permitirá aplicar ciertas operaciones sobre textos.
+library("tm")
+# Datos de entrenamiento.
+# Obtenemos en forma de vector la columna de las reviews.
+train_reviews<-as.vector(mini_training_dataset$review)
+# Lo convertimos en un documento y lo almacenamos en el corpus que posteriormente crearemos.
+train_reviews_corpus<-VectorSource(train_reviews)
+train_reviews_corpus<-VCorpus(train_reviews_corpus)
+
+# Datos de test.
+test_reviews<-as.vector(mini_test_dataset$review)
+test_reviews_corpus<-VectorSource(test_reviews)
+test_reviews_corpus<-VCorpus(test_reviews_corpus)
+
+# Mostramos algunos de los documentos obtenidos como ejemplo.
+train_reviews_corpus[[5]]$content
+```
+Tal y como se puede observar, ahora cada una de las *reviews* de los pacientes se encuentra en un documento aparte, es decir, cada una de las opiniones de los pacientes ocupan una posición del vector de documentos. A continuación eliminaremos los **signos de puntuación** de las críticas porque, en principio, no nos aportan información relevante a la hora de aplicar técnicas relacionadas con la minería de textos. Asimismo, también hemos observado que ciertos signos de puntuación, como las comillas, no han sido procesados de forma adecuada y aparecen codificados como números. Obviamente este tipo de términos tampoco nos son útiles, por lo que procedemos, además, a **eliminar los números** de las críticas. Del mismo modo, con el objetivo de aplicar el mismo tratamiento a todas las palabras, procedemos también a **eliminar las mayúsculas**.
+
+Por otro lado cabe destacar que para ciertas técnicas de análisis de textos, como podría ser encontrar los términos más comúnes, existen algunas palabras, en todos los idiomas, cuyo número de apariciones es súmamente considerable pero no aportan ningún tipo de información relevante. Este tipo de términos se pueden clasificar en preposiciones, artículos, entre otros, y en este ámbito se suelen conocer como **stop words**. En nuestro caso, como todas las *reviews* se encuentran en inglés, especificaremos dicho idioma para eliminar este tipo de términos de las críticas de los pacientes. Tras este procedimiento, los términos eliminados dejan espacios en blanco que también vamos a eliminar en este primer preprocesamiento de los datos textuales.
+
+```{r preprocesamiento_textos}
+# Cargamos la librería que nos permitirá aplicar ciertas técnicas de preprocesamiento de textos.
+library(tm)
+# Datos de entrenamiento.
+# Eliminamos los signos de puntuación con la función tm_map indicándoselo como segundo argumento.
+train_reviews_corpus<-tm_map(train_reviews_corpus, content_transformer(removePunctuation))
+# Eliminamos los números.
+train_reviews_corpus<-tm_map(train_reviews_corpus, content_transformer(removeNumbers))
+# Eliminamos las mayúsculas.
+train_reviews_corpus<-tm_map(train_reviews_corpus, content_transformer(tolower))
+# Eliminamos los stopwords en inglés.
+train_reviews_corpus<-tm_map(train_reviews_corpus, content_transformer(removeWords), stopwords("english"))
+# Eliminamos los espacios en blanco sobrantes tras el anterior procedimiento,
+train_reviews_corpus<-tm_map(train_reviews_corpus, content_transformer(stripWhitespace))
+
+# Datos de prueba.
+test_reviews_corpus<-tm_map(test_reviews_corpus, content_transformer(removePunctuation))
+test_reviews_corpus<-tm_map(test_reviews_corpus, content_transformer(removeNumbers))
+test_reviews_corpus<-tm_map(test_reviews_corpus, content_transformer(tolower))
+test_reviews_corpus<-tm_map(test_reviews_corpus, content_transformer(removeWords), stopwords("english"))
+test_reviews_corpus<-tm_map(test_reviews_corpus, content_transformer(stripWhitespace))
+
+# Mostramos un ejemplo de preprocesamiento realizado.
+train_reviews_corpus[[5]]$content
+```
+Como podemos observar, tras este primer preprocesamiento de las *reviews* de los pacientes se presentan textos en los que únicamente aparecen términos que tienen un mayor grado de relevancia para el estudio de este dataset en particular. No obstante, a consecuencia de eliminar palabras, pueden existir documentos sin contenido y por lo tanto no disponen de ninguna utilidad. Este será el siguiente procesamiento que aplicaremos a continuación: **eliminar los documentos vacíos.**
+```{r preprocesamiento_textos}
+# Datos de entrenamiento.
+# Borraremos los documentos que estén vacíos. Para ello los tranformamos en una matriz de documentos.
+train_reviews_matriz<-DocumentTermMatrix(train_reviews_corpus)
+# Contamos el número de palabras de cada documento.
+recuento_palabras<-apply(train_reviews_matriz, 1, sum)
+# Comprobamos el número de documentos con 0 palabras.
+cat("Documentos vacíos en el conjunto de entrenamiento:", recuento_palabras[recuento_palabras=0])
+
+# Datos de prueba
+test_reviews_matriz<-DocumentTermMatrix(test_reviews_corpus)
+recuento_palabras<-apply(test_reviews_matriz, 1, sum)
+cat("\nDocumentos vacíos en el conjunto de prueba", recuento_palabras[recuento_palabras=0])
+
+# Estudio de la colección de documentos del conjunto de entrenamiento obtenida.
+cat("\n\nEstudio de la colección de documentos del conjunto de entrenamiento tras el preprocesamiento.")
+inspect(train_reviews_matriz)
+```
+Tal y como podemos comprobar, en nuestro caso, tras realizar el procedimiento por el cual eliminábamos palabras no relevantes, no existen documentos vacíos de contenido por lo que no podemos descartar ninguno. Asimismo, en función del estudio que se muestra a continuación acerca de la naturaleza de los documentos obtenidos del conjunto de entrenamiento, cabe destacar que se disponen de un total de 5.000 documentos y 11.825 términos. Sin embargo, en la lista de los términos más comunes podemos comprobar que algunos de ellos son variantes de otros, como por ejemplo son *take* y *taking*. Representa la misma información pero sin embargo se identifican como términos diferentes. Para eliminar este tipo de situaciones procedemos a aplicar una técnica conocida como **Lematización o Steaming**. Con ella se descartan aquellas palabras que tengan la misma raíz semántica y solo quedará un término de la misma familia. 
+
+```{r preprocesamiento_textos}
+# Datos de entrenamiento.
+train_reviews_corpus<-tm_map(train_reviews_corpus, stemDocument)
+train_reviews_matriz<-DocumentTermMatrix(train_reviews_corpus)
+cat("Estudio de los documentos obtenidos tras el proceso de Lematización\n")
+inspect(train_reviews_matriz)
+# Datos de prueba.
+test_reviews_corpus<-tm_map(test_reviews_corpus, stemDocument)
+test_reviews_matriz<-DocumentTermMatrix(test_reviews_corpus)
+```
+Tras la aplicación de esta última técnica podemos comprobar que se ha producido una reducción razonable de términos pasando a tener menos de 8.500 en total. Asimismo, podemos observar una mejora en relación a los términos más frecuentes puesto que todos ellos son diferentes y por lo tanto todos pueden aportar información relevante a la hora de aplicar los sucesivos algoritmos a lo largo de este documento.
+
+### Nube de palabras
+
+
+
 # Análisis de correlación.
 
 En esta sección vamos a estudiar las relaciones que existen entre todas los campos de nuestro dataset para comprobar si algunos de ellos están correlacionados. Para ello vamos a convertir los atributos categóricos, como las enfermedades y los tratamientos, en valores numéricos sobre los que aplicar el estudio de la correlación. Sin embargo, campos como la fecha en la que se publicó la crítica del paciente así como esta misma, los vamos a omitir puesto que no tiene sentido intentar convertirlos en variables numéricas. 
@@ -515,4 +603,8 @@ lines(x = puntos$rating, intervalo_confianza$superior, col = "blue", pch = 4)
 ```
 En esta gráfica queda cláramente representada la relación existente entre la variable *rating* y la etiqueta binaria que deseamos predecir *ratingLabel*. Esta relación consiste en que a mayor puntuación, mayor es la efectividad del tratamiento y por lo tanto se encuentra dentro de la categorái de medicamentos efectivos. 
 
-En base a los estudios realizados con diversas variantes de la regresión, podemos determinar que la **regresión polinómica** ha sido el único con el que hemos obtenido un modelo competitivo, confiable y capaz de clasificar correctamente los tratamientos en efectivos o no efectivos en base a la puntuación, entre 0 y 10, asociada por cada uno de los pacientes afectados. Con ello podemos concluir que nuestro problema **no es lineal*, y por lo tanto no se puede entrenar un modelo lineal para realizar una buena predicción.
+En base a los estudios realizados con diversas variantes de la regresión, podemos determinar que la **regresión polinómica** ha sido el único con el que hemos obtenido un modelo competitivo, confiable y capaz de clasificar correctamente los tratamientos en efectivos o no efectivos en base a la puntuación, entre 0 y 10, asociada por cada uno de los pacientes afectados. Con ello podemos concluir que nuestro problema **no es lineal*, y por lo tanto no se puede entrenar un modelo lineal para realizar una buena predicción
+
+## Reglas de asociación
+
+En esta técnica se pretende realizar un análisis acerca de uno de los campos más relevantes del dataset, a nuestro parecer: las *reviews* de los pacientes. Aplicando este procedimiento sobre nuestro conjunto de datos pretendemos extraer las relaciones existentes entre las palabras contenidas en estas críticas que redactan los enfermos asociadas a una determinada enfermedad y a uno o varios tratamientos. De este modo podremos conocer los términos más comunes asociados a cada una de los medicamentos recetados.
