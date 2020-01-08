@@ -40,7 +40,7 @@ Este dataset que hemos seleccionado proporciona dos conjuntos, uno de entrenamie
 La elección de este dataset se fundamenta en diversos motivos. El más importante es que cumple con los requisitos establecidos por el profesor para, posteriormente, aplicar los algoritmos vistos en esta asignatura. Sin embargo, también tuvimos en cuenta la organización de competiciones de Machine Learning en las que se proponía este dataset como principal protagonista. 
 
 Para comenzar con el estudio estadístico cargamos los datos de entrenamiento.
-```{r lectura_datos}
+```{r lectura_datos, warning=FALSE}
 # Cargamos la biblioteca que utilizaremos para graficar los datos estadísticos.
 library(ggplot2)
 # Cargamos los datos de entrenamiento y test
@@ -323,7 +323,7 @@ ggplot(data=dataframe, aes(x=enfermedades, y=recuento)) + geom_bar(stat="identit
 
 En este subapartado procedemos a aplicar diversas técnicas para preparar los datos textuales, en especial las *reviews* de los pacientes, para que posteriormente podamos aplicar ciertos algoritmos con mayor facilidad. En primer lugar vamos a crear los vectores de documentos a partir de la columna anteriormente mencionada. Para ello convertiremos cada una de las críticas de los pacientes en un documento y las almacenaremos en un vector común. 
 
-```{r corpus}
+```{r corpus, warning=FALSE}
 # Cargamos el paquete que nos permitirá aplicar ciertas operaciones sobre textos.
 library("tm")
 # Datos de entrenamiento.
@@ -403,46 +403,7 @@ test_reviews_matriz<-DocumentTermMatrix(test_reviews_corpus)
 ```
 Tras la aplicación de esta última técnica podemos comprobar que se ha producido una reducción razonable de términos pasando a tener menos de 8.500 en total. Asimismo, podemos observar una mejora en relación a los términos más frecuentes puesto que todos ellos son diferentes y por lo tanto todos pueden aportar información relevante a la hora de aplicar los sucesivos algoritmos a lo largo de este documento.
 
-## Nube de palabras
-
-Una vez disponemos de los datos preprocesados, tanto asociados al conjunto de entrenamiento como al de prueba, procedemos a representar gráficamente los términos obtenidos de los diversos documentos mediante una primera **nube de palabras**, en la cual se ordenarán las palabras de las críticas de los pacientes en función de su número de apariciones. De este modo podremos conocer los términos más utilizados en las *reviews*. Estos serán representados en un mayor tamaño y se irá reduciendo conforme disminuya el número de veces que aparece cada uno de los términos.
-```{r nube_palabras_apariciones}
-library(wordcloud2)
-library(knitr)
-# train_reviews_dataframe<-as.data.frame(as.matrix(train_reviews_matriz))
-# colnames(train_reviews_dataframe)<-make.names(colnames(train_reviews_dataframe))
-# frecuencia_terminos<-colSums(train_reviews_dataframe)
-# frecuencia_terminos<-frecuencia_terminos[order(frecuencia_terminos, decreasing = T)]
-#wordcloud(freq = as.vector(frecuencia_terminos), words = names(frecuencia_terminos),random.order = FALSE, colors = brewer.pal(8, 'Dark2'),max.words=100)
-
-# Convertimos el corpus en una matriz de documentos cuyas filas serán los términos que aparecen en cada uno de ellos.
-train_reviews_matriz_terminos<-as.matrix(TermDocumentMatrix(train_reviews_corpus))
-# Convertimos la colección de documentos en una matriz para operar con ella.
-#m <- as.matrix(tdm) #lo vuelve una matriz
-# Ordenamos los términos en función de sus apariciones totales.
-frecuencia_terminos<-sort(rowSums(train_reviews_matriz_terminos), decreasing=TRUE)
-# Obtenemos un dataframe de los términos ordenados para poder representar la nube de palabras.
-train_reviews_dataframe_ordenado<-data.frame(word=names(frecuencia_terminos), freq=frecuencia_terminos)
-wordcloud2(train_reviews_dataframe_ordenado, size=1.2)
-```
-Tal y como podemos apreciar algunos de los términos más usados en las críticas de los pacientes son *take*, *day*, *feel*, *start*, entre otros. No obstante, si ordenásemos los términos en función de su semántica nos sería de mayor utilidad puesto que nos aportaría una idea acerca de si la mayoría de las palabras contenidas en las *reviews* de los pacientes hacen referencia a una crítica positiva o negativa. 
-
-```{r nube_palabras_sentimientos}
-# library(tidyverse)
-# library(readr)
-# library(RColorBrewer)
-# library(tidytext)
-# # Convertimos el corpus a una matriz.
-# drugstext<-unnest_tokens(mini_training_dataset, word, items)
-# binarytextscore<-get_sentiments(lexicon = "bing")
-# res <- drugstext %>%
-#     inner_join(binarytextscore, by = "word") %>%
-#      count(word, sentiment) %>%
-#      mutate(color = ifelse(sentiment == "positive", "darkgreen", "red"))
-# wordcloud(res$word, res$n, random.order = FALSE, colors = res$color, ordered.colors = TRUE)
-```
-
-# Análisis de correlación.
+## Análisis de correlación.
 
 En esta sección vamos a estudiar las relaciones que existen entre todas los campos de nuestro dataset para comprobar si algunos de ellos están correlacionados. Para ello vamos a convertir los atributos categóricos, como las enfermedades y los tratamientos, en valores numéricos sobre los que aplicar el estudio de la correlación. Sin embargo, campos como la fecha en la que se publicó la crítica del paciente así como esta misma, los vamos a omitir puesto que no tiene sentido intentar convertirlos en variables numéricas. 
 ```{r correlacion}
@@ -470,7 +431,7 @@ En la primera imagen podemos comprobar los coeficientes de correlación entre ca
 
 En la segunda imagen podemos visualizar los coeficientes de correlación entre cada par de variables clasificados y coloreados en función de cuán fuerte es su asociación. Tal y como podemos comprobar, la relación de correlación más fuerte, y por ende, la que dispone de un color más definido, es la que hemos comentado anteriormente: *rating-usefulCount*. El resto de asociaciones no cuentan con valores significativos y por lo tanto, apenas son visibles en la gráfica.
   
-# Análisis de la influencia de las variables.
+## Análisis de la influencia de las variables.
 
 A continuación comprobaremos la importancia de cada uno de los campos que se incluyen en nuestro dataset. El objetivo es utilizar, solamente, aquellas columnas que sean relevantes para el estudio de este dataset en particular. Comenzamos eliminando directamente la columna *uniqueID* en ambos conjuntos de datos puesto que no aporta ningún tipo de información relevante ya que solo representa el identificador único para cada una de los registros del dataset.
 Del mismo modo también vamos a eliminar el campo en el que se recoge la fecha en la que se publicó la crítica puesto que tampoco nos aporta información útil para aplicar los sucesivos algoritmos.
@@ -484,11 +445,40 @@ mini_test_dataset = mini_test_dataset[-1]
 mini_test_dataset = mini_test_dataset[-5]
 ```
 
-# Análisis de sentimientos
+# Análisis textual
 
-De las opiniones de los pacientes
+Tal y como hemos comentado al comienzo de este documento, una de las columnas más relevantes de nuestro dataset es la denominada *review*, en la que los pacientes expresan su opinión acerca del tratamiento recetado para su dolencia en particular. Es por ello por lo que, tras preprocesar estas críticas, procedemos a analizar el contenido de las mismas con el objetivo de conocer cuáles son los términos más repetidos así como el contento o descontento de los pacientes con sus respectivos medicamentos.
 
-# Algoritmos.
+## Nube de palabras
+
+Una vez disponemos de los datos preprocesados, tanto asociados al conjunto de entrenamiento como al de prueba, procedemos a representar gráficamente los términos obtenidos de los diversos documentos mediante una primera **nube de palabras**, en la cual se ordenarán las palabras de las críticas de los pacientes en función de su número de apariciones. De este modo podremos conocer los términos más utilizados en las *reviews*. Estos serán representados en un mayor tamaño y se irá reduciendo conforme disminuya el número de veces que aparece cada uno de los términos.
+```{r nube_palabras_apariciones}
+library(wordcloud2)
+library(knitr)
+# Convertimos el corpus en una matriz de documentos cuyas filas serán los términos que aparecen en cada uno de ellos.
+train_reviews_matriz_terminos<-as.matrix(TermDocumentMatrix(train_reviews_corpus))
+# Ordenamos los términos en función de sus apariciones totales.
+frecuencia_terminos<-sort(rowSums(train_reviews_matriz_terminos), decreasing=TRUE)
+# Obtenemos un dataframe de los términos ordenados para poder representar la nube de palabras.
+train_reviews_dataframe_ordenado<-data.frame(word=names(frecuencia_terminos), freq=frecuencia_terminos)
+wordcloud2(train_reviews_dataframe_ordenado, size=1.2)
+```
+Tal y como podemos comprobar, la mayor parte de los términos más utilizados por los pacientes a la hora de expresar su opinión acerca de los fármacos recetados están directamente relacionados con el tiempo, como *day*, *year*, entre otros. Posteriormente, podemos observar un segundo grupo de palabras relacionadas con los sentimientos como *feel* o *pain*. Incluso podemos afirmar que dos de las enfermedades que se encuentran en nuestro dataset aparecen esta nube de palabras: *pain* y *anxieti*. Para estudiar más a fondo el contexto en el que se encuentran estos términos a continuación procedemos a analizar los sentimientos que se encuentran tras cada una de las críticas de los pacientes.
+
+## Análisis de sentimientos
+
+En esta sección trataremos de conocer el grado de satisfacción general de los pacientes con respecto a los tratamientos que se les han recetado para su dolencia particular. Para ello, en primer lugar, procedemos a realizar una análisis general que nos informe acerca de la tendencia global de las críticas. Para ello haremos uso del corpus extraido tras el preprocesamiento de las críticas y le aplicaremos el método ***analyzeSentiment*** de la biblioteca [*SentimentAnalysis*](https://cran.r-project.org/web/packages/SentimentAnalysis/vignettes/SentimentAnalysis.html)  con la cual obtendremos el tipo de sentimiento que se esconde tras cada una de las *reviews*: positivo, negativo o neutro. Para ello este tipo de biblioteca contiene una serie de diccionarios con los términos más relevantes para cada uno de los tres tipos de sentimientos. En nuestro caso particular utilizaremos el diccionario por defecto denominado *QDAP*.
+```{r regresion_lineal_simple}
+library(SentimentAnalysis)
+analisis_sentimientos<-convertToDirection(analyzeSentiment(train_reviews_corpus)$SentimentQDAP) 
+resumen_analisis = summary(analisis_sentimientos)
+barplot(resumen_analisis, main = "Análisis de sentimientos de las reviews",
+     xlab = "Tipo de sentimiento", ylab = "Nº de reviews", col = c("red3", "yellow2", "springgreen3"))
+```
+Como podemos observar en el gráfico resultante la gran mayoría de las críticas muestran un **sentimiento positivo**, por lo que podemos deducir que de forma general los pacientes están satisfechos con los tratamientos que han sido recetados para sus respectivas enfermedades. Asimismo, cabe destacar la considerable diferencia entre el número de críticas positivas y negativas. Por último, las críticas asociadas a un sentimiento neutro se corresponden con el grupo minotiratio puesto que es entendemos que es bastante complicado proporcionar una opinión sin demostrar nuestros sentimientos acerca de un fármaco.
+
+
+# Ténicas de Regresión
 
 ## Regresión lineal simple.
 
@@ -644,6 +634,6 @@ En esta gráfica queda cláramente representada la relación existente entre la 
 
 En base a los estudios realizados con diversas variantes de la regresión, podemos determinar que la **regresión polinómica** ha sido el único con el que hemos obtenido un modelo competitivo, confiable y capaz de clasificar correctamente los tratamientos en efectivos o no efectivos en base a la puntuación, entre 0 y 10, asociada por cada uno de los pacientes afectados. Con ello podemos concluir que nuestro problema **no es lineal*, y por lo tanto no se puede entrenar un modelo lineal para realizar una buena predicción
 
-## Reglas de asociación
+# Reglas de asociación
 
 En esta técnica se pretende realizar un análisis acerca de uno de los campos más relevantes del dataset, a nuestro parecer: las *reviews* de los pacientes. Aplicando este procedimiento sobre nuestro conjunto de datos pretendemos extraer las relaciones existentes entre las palabras contenidas en estas críticas que redactan los enfermos asociadas a una determinada enfermedad y a uno o varios tratamientos. De este modo podremos conocer los términos más comunes asociados a cada una de los medicamentos recetados.
