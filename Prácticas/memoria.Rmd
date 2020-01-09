@@ -468,15 +468,34 @@ Tal y como podemos comprobar, la mayor parte de los términos más utilizados po
 ## Análisis de sentimientos
 
 En esta sección trataremos de conocer el grado de satisfacción general de los pacientes con respecto a los tratamientos que se les han recetado para su dolencia particular. Para ello, en primer lugar, procedemos a realizar una análisis general que nos informe acerca de la tendencia global de las críticas. Para ello haremos uso del corpus extraido tras el preprocesamiento de las críticas y le aplicaremos el método ***analyzeSentiment*** de la biblioteca [*SentimentAnalysis*](https://cran.r-project.org/web/packages/SentimentAnalysis/vignettes/SentimentAnalysis.html)  con la cual obtendremos el tipo de sentimiento que se esconde tras cada una de las *reviews*: positivo, negativo o neutro. Para ello este tipo de biblioteca contiene una serie de diccionarios con los términos más relevantes para cada uno de los tres tipos de sentimientos. En nuestro caso particular utilizaremos el diccionario por defecto denominado *QDAP*.
-```{r regresion_lineal_simple}
+```{r analisis_sentimientos, warning=false}
 library(SentimentAnalysis)
-analisis_sentimientos<-convertToDirection(analyzeSentiment(train_reviews_corpus)$SentimentQDAP) 
-resumen_analisis = summary(analisis_sentimientos)
-barplot(resumen_analisis, main = "Análisis de sentimientos de las reviews",
+# Obtenemos los sentimientos generales de las reviews
+train_analisis_sentimientos<-convertToDirection(analyzeSentiment(train_reviews_corpus)$SentimentQDAP) 
+# Obtenemos su resumen estadístico
+resumen_analisis = summary(train_analisis_sentimientos)
+# Dibujamos los resultados obtenidos
+barplot(resumen_analisis, main = "Análisis de sentimientos de las reviews en train",
      xlab = "Tipo de sentimiento", ylab = "Nº de reviews", col = c("red3", "yellow2", "springgreen3"))
 ```
-Como podemos observar en el gráfico resultante la gran mayoría de las críticas muestran un **sentimiento positivo**, por lo que podemos deducir que de forma general los pacientes están satisfechos con los tratamientos que han sido recetados para sus respectivas enfermedades. Asimismo, cabe destacar la considerable diferencia entre el número de críticas positivas y negativas. Por último, las críticas asociadas a un sentimiento neutro se corresponden con el grupo minotiratio puesto que es entendemos que es bastante complicado proporcionar una opinión sin demostrar nuestros sentimientos acerca de un fármaco.
+Como podemos observar en ambos gráficos la gran mayoría de las críticas muestran un **sentimiento positivo**, por lo que podemos deducir que de forma general los pacientes están satisfechos con los tratamientos que han sido recetados para sus respectivas enfermedades. Asimismo, cabe destacar la considerable diferencia entre el número de críticas positivas y negativas. Por último, las críticas asociadas a un sentimiento neutro se corresponden con el grupo minotiratio puesto que es entendemos que es bastante complicado proporcionar una opinión sin demostrar nuestros sentimientos acerca de un fármaco.
 
+A continuación procedemos a profundizar más acerca de los resultados obtenidos anteriormente con el objetivo de conocer cuáles son los sentimientos concretos más comunes que los pacientes demuestran a la hora de opinar sobre sus respectivos tratamientos. Parar ello haremos uso de la librería *syuzhet*, y en concreto de la función *get_nrc_sentiment*, con la cual seremos capaces de medir el número de *reviews* que reflejan alguno de los ocho sentimientos posibles: enfado, expectación miedo, alegría, tristeza, confianza, sorpresa.
+
+```{r analisis_sentimientos, warning=false}
+library(syuzhet)
+library("tm")
+library(ggplot2)
+# Obtenemos el corpus de los comentarios de los pacientes ya preprocesados.
+train_reviews_corpus2<-Corpus(VectorSource(train_reviews))
+# Realizamos este nuevo análisis de sentimientos.
+analisis_sentimientos2<-get_nrc_sentiment(train_reviews_corpus2$content)
+# Representamos gráficamente los resultados ordenados de menor a mayor en función del porcentaje de críticas que se corresponden con cada sentimiento
+library(RColorBrewer)
+colores<-brewer.pal(8, "Set2")
+barplot(sort(colSums(prop.table(analisis_sentimientos2[, 1:8]))), las=2, col=colores)
+```
+Tal y como podemos comprobar el sentimiento que predomina en las críticas de los pacientes es la confianza, seguido de un segundo sentimiento negativo que es la tristeza y de un tercero que es la expectación. Estos resultados pueden explicar el comportamiento de los seres humanos ante una enfermedad, y es que al ser diagnosticados es normal que sintamos tristeza por la situación actual y por la temporada que nos espera de tratamiento. Asimismo, también es razonable sentir confianza en los fármacos recetados por los especialistas en medicina para tratar nuestra dolencia y que nos hagamos ciertas expectativas acerca de la efectividad del mismo.
 
 # Ténicas de Regresión
 
