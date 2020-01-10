@@ -33,7 +33,20 @@ lang: es-ES
 \newpage
 <!------------------------------------------------------>
 
-# Exploración de datos del conjunto de entrenamiento original.
+# Descripción del dataset
+
+El dataset escogido para realizar las prácticas de esta asignatura es el ***UCI ML Drug Review dataset*** [1]. El objetivo de este conjunto de datos consiste en recopilar información acerca de la efectividad de los fármacos recetados para las enfermedades diagnosticadas. Para ello se recopilan hasta siete campos, cuya naturaleza puede ser numérica o textual. Los campos más relevantes son *drugName*, en el que se encuentran los medicamentos recetados, *condition* que recopila las enfermedades, *review* en el que se almacenan las críticas de los pacientes con respecto a sus respectivas dolencias y tratamientos, así como *rating* que es un valor numérico entre 0 y 10 que el paciente le asigna a un tratamiento según su efectividad.
+
+Otros campos menos relevantes son *uniqueID* con el que se representa el identificador único para cada una de las críticas de los pacientes así como *date*, que hace referencia a la fecha de publicación de las mismas. Por último, asociado también a las *reviews*, disponemos del campo *usefulCount* con el cual otros pacientes pueden apoyar y verificar la utilidad de las críticas de sus compañeros de hospital.
+
+# Problema a resolver
+
+<<<<<REDACTARLO>>>>>>>>
+1) Analizar los sentimientos de las críticas para comprobar si son quejas.
+2) Comprobar las relaciones entre los términos y cuáles son los más frecuentes.
+3) Predecir si un fármaco es efectivo o no en función de su puntuación de 0 a 10.
+
+# Análisis exploratorio de los datos del conjunto de entrenamiento original.
 
 Este dataset que hemos seleccionado proporciona dos conjuntos, uno de entrenamiento y otro de prueba, en los que se recogen las opiniones de los pacientes, diagnosticados de una determinada enfermedad, acerca de los tratamientos que han probado. Existen dos tipos de opiniones, principalmente, una de ellas consiste en valorar el medicamento recetado para una enfermedad en concreto de 0 a 10. Por otro lado también se recopila, para cada opinión de un paciente, el número de personas que consideran que su crítica es útil. 
 
@@ -331,7 +344,7 @@ library("tm")
 train_reviews<-as.vector(mini_training_dataset$review)
 # Lo convertimos en un documento y lo almacenamos en el corpus que posteriormente crearemos.
 train_reviews_corpus<-VectorSource(train_reviews)
-train_reviews_corpus<-VCorpus(train_reviews_corpus)
+train_reviews_corpus<-Corpus(train_reviews_corpus)
 
 # Datos de test.
 test_reviews<-as.vector(mini_test_dataset$review)
@@ -345,7 +358,7 @@ Tal y como se puede observar, ahora cada una de las *reviews* de los pacientes s
 
 Por otro lado cabe destacar que para ciertas técnicas de análisis de textos, como podría ser encontrar los términos más comúnes, existen algunas palabras, en todos los idiomas, cuyo número de apariciones es súmamente considerable pero no aportan ningún tipo de información relevante. Este tipo de términos se pueden clasificar en preposiciones, artículos, entre otros, y en este ámbito se suelen conocer como **stop words**. En nuestro caso, como todas las *reviews* se encuentran en inglés, especificaremos dicho idioma para eliminar este tipo de términos de las críticas de los pacientes. Tras este procedimiento, los términos eliminados dejan espacios en blanco que también vamos a eliminar en este primer preprocesamiento de los datos textuales.
 
-```{r preprocesamiento_textos}
+```{r preprocesamiento_textos, warning=false}
 # Cargamos la librería que nos permitirá aplicar ciertas técnicas de preprocesamiento de textos.
 library(tm)
 # Datos de entrenamiento.
@@ -391,7 +404,7 @@ inspect(train_reviews_matriz)
 ```
 Tal y como podemos comprobar, en nuestro caso, tras realizar el procedimiento por el cual eliminábamos palabras no relevantes, no existen documentos vacíos de contenido por lo que no podemos descartar ninguno. Asimismo, en función del estudio que se muestra a continuación acerca de la naturaleza de los documentos obtenidos del conjunto de entrenamiento, cabe destacar que se disponen de un total de 5.000 documentos y 11.825 términos. Sin embargo, en la lista de los términos más comunes podemos comprobar que algunos de ellos son variantes de otros, como por ejemplo son *take* y *taking*. Representa la misma información pero sin embargo se identifican como términos diferentes. Para eliminar este tipo de situaciones procedemos a aplicar una técnica conocida como **Lematización o Steaming**. Con ella se descartan aquellas palabras que tengan la misma raíz semántica y solo quedará un término de la misma familia. 
 
-```{r preprocesamiento_textos}
+```{r preprocesamiento_textos, warning=false}
 # Datos de entrenamiento.
 train_reviews_corpus<-tm_map(train_reviews_corpus, stemDocument)
 train_reviews_matriz<-DocumentTermMatrix(train_reviews_corpus)
@@ -496,6 +509,31 @@ colores<-brewer.pal(8, "Set2")
 barplot(sort(colSums(prop.table(analisis_sentimientos2[, 1:8]))), las=2, col=colores)
 ```
 Tal y como podemos comprobar el sentimiento que predomina en las críticas de los pacientes es la confianza, seguido de un segundo sentimiento negativo que es la tristeza y de un tercero que es la expectación. Estos resultados pueden explicar el comportamiento de los seres humanos ante una enfermedad, y es que al ser diagnosticados es normal que sintamos tristeza por la situación actual y por la temporada que nos espera de tratamiento. Asimismo, también es razonable sentir confianza en los fármacos recetados por los especialistas en medicina para tratar nuestra dolencia y que nos hagamos ciertas expectativas acerca de la efectividad del mismo.
+
+# Reglas de asociación
+
+En esta técnica se pretende realizar un análisis acerca de uno de los campos más relevantes del dataset, a nuestro parecer: las *reviews* de los pacientes. Aplicando este procedimiento sobre nuestro conjunto de datos pretendemos extraer las relaciones existentes entre las palabras contenidas en estas críticas que redactan los enfermos asociadas a una determinada enfermedad y a uno o varios tratamientos. De este modo podremos conocer las relaciones existentes entre los términos que son más comunes en las *reviews*.
+
+<<<<<<<<<<<<<<EXPLICAR QUE SE OBTIENEN LOS TÉRMINOS YA SEPARADOS DESDE EL CORPUS PREPROCESADO CON LA FUNCIÓN TEXT_TOKENS>>>>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<<<DIBUJAR LOS RESULTADOS>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+<<<<<<<<<<<<<PROBAR VARIANDO EL SOPORTE Y LA CONFIANZA>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+El primer paso que procedemos a realizar consiste en separar los términos de las críticas de modo que obtengamos las palabras individuales y separadas del resto. De este modo, a continuación podremos componer la **base de datos transaccional** en la que cada elemento se corresponde con una única palabra. Una vez dispongamos de los datos preparados podremos obtener las reglas de asociación mediante el paquete ***aRules***. Para ello utilizaremos el algoritmo *apriori*, el cual extrae los conjuntos de palabras más frecuentes y los convierte en reglas de asociación. Como parámetros recibe la base de datos con las transacciones además de argumentos de configuración tales como el soporte y la confianza. 
+```{r asocacion, warning=false}
+# Importamos la librería para obtener las reglas de asociación y la base de datos transaccional
+library(arules)
+library(corpus)
+# Separamos los términos de cada una de las críticas ya preprocesadas.
+terminos_criticas<-text_tokens(train_reviews_corpus)
+# Convertimos los términos a una base de datos transaccional
+reviews_bd_transaccional<-as(terminos_criticas, "transactions")
+summary(reviews_bd_transaccional)
+itemFrequencyPlot(reviews_bd_transaccional, topN=10)
+# Obtenemos las reglas de asociación.
+reglas_asoc<-apriori(reviews_bd_transaccional, parameter = list(support = 0.001, confidence = 0.8, target="rules", minlen=2), control = list(memopt = TRUE, load = FALSE))
+reglas_asoc<-sort(reglas_asoc, decreasing=TRUE, by="confidence")
+inspect(head(reglas_asoc,100))
+```
+
 
 # Ténicas de Regresión
 
@@ -651,8 +689,8 @@ lines(x = puntos$rating, intervalo_confianza$superior, col = "blue", pch = 4)
 ```
 En esta gráfica queda cláramente representada la relación existente entre la variable *rating* y la etiqueta binaria que deseamos predecir *ratingLabel*. Esta relación consiste en que a mayor puntuación, mayor es la efectividad del tratamiento y por lo tanto se encuentra dentro de la categorái de medicamentos efectivos. 
 
-En base a los estudios realizados con diversas variantes de la regresión, podemos determinar que la **regresión polinómica** ha sido el único con el que hemos obtenido un modelo competitivo, confiable y capaz de clasificar correctamente los tratamientos en efectivos o no efectivos en base a la puntuación, entre 0 y 10, asociada por cada uno de los pacientes afectados. Con ello podemos concluir que nuestro problema **no es lineal*, y por lo tanto no se puede entrenar un modelo lineal para realizar una buena predicción
+En base a los estudios realizados con diversas variantes de la regresión, podemos determinar que la **regresión polinómica** ha sido el único con el que hemos obtenido un modelo competitivo, confiable y capaz de clasificar correctamente los tratamientos en efectivos o no efectivos en base a la puntuación, entre 0 y 10, asociada por cada uno de los pacientes afectados. Con ello podemos concluir que nuestro problema **no es lineal*, y por lo tanto no se puede entrenar un modelo lineal para realizar una buena predicción.
 
-# Reglas de asociación
+# Bibliografía
 
-En esta técnica se pretende realizar un análisis acerca de uno de los campos más relevantes del dataset, a nuestro parecer: las *reviews* de los pacientes. Aplicando este procedimiento sobre nuestro conjunto de datos pretendemos extraer las relaciones existentes entre las palabras contenidas en estas críticas que redactan los enfermos asociadas a una determinada enfermedad y a uno o varios tratamientos. De este modo podremos conocer los términos más comunes asociados a cada una de los medicamentos recetados.
+1. Jessica Li, Kaggle University Club Hackathon, *UCI ML Drug Review Dataset*, https://www.kaggle.com/jessicali9530/kuc-hackathon-winter-2018#drugsComTrain_raw.csv
