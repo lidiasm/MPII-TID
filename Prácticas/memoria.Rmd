@@ -2,9 +2,13 @@
 title: "Memoria de las prácticas de Tratamiento Inteligente de Datos."
 author: "Lidia Sánchez Mérida, Fernando Roldán Zafra."
 date: "4/12/2019"
+geometry: margin=2cm
 output:
   pdf_document:
-    keep_tex: true
+    keep_tex: yes
+  word_document: default
+  html_document:
+    df_print: paged
 lang: es-ES
 ---
 <!------------------------ PORTADA --------------------->
@@ -53,7 +57,7 @@ Este dataset que hemos seleccionado proporciona dos conjuntos, uno de entrenamie
 La elección de este dataset se fundamenta en diversos motivos. El más importante es que cumple con los requisitos establecidos por el profesor para, posteriormente, aplicar los algoritmos vistos en esta asignatura. Sin embargo, también tuvimos en cuenta la organización de competiciones de Machine Learning en las que se proponía este dataset como principal protagonista. 
 
 Para comenzar con el estudio estadístico cargamos los datos de entrenamiento.
-```{r lectura_datos, warning=FALSE}
+```{r, warning=FALSE}
 # Cargamos la biblioteca que utilizaremos para graficar los datos estadísticos.
 library(ggplot2)
 # Cargamos los datos de entrenamiento y test
@@ -63,7 +67,7 @@ test_dataset <- read.csv(file="./drugsComTest_raw.csv", header=TRUE, sep=",")
 
 A continuación presentamos las estadísticas que hemos pensado son más relevantes para nuestro dataset en particular. En primer lugar averiguamos las diez enfermedades más comunes que se encuentran registradas en nuestro conjunto de datos con el objetivo de visualizar aquellas dolencias que se presentan más frecuente en un centro sanitario.
 
-```{r estadisticas}
+```{r}
 # 1) Enfermedades más comunes.
 # Extraemos un resumen acerca de las enfermedades registradas.
 recuento_enfermedades<-summary(training_dataset$condition)
@@ -78,11 +82,12 @@ dataframe<-data.frame(enfermedades=enfermedades[1:10], recuento=recuento[1:10])
 # Las representamos en un gráfico de barras.
 ggplot(data=dataframe, aes(x=enfermedades, y=recuento)) + geom_bar(stat="identity")+coord_flip()+ggtitle('Enfermedades más comunes.')
 ```
+
 Tal y como se puede comprobar que la enfermedad *Birth Control* es consideráblemente mayoritaria frente al número de muestras asociadas a las otras nueve enfermedades. Por ello, cuando reduzcamos nuestro conjunto de entrenamiento y test, deberemos tener en cuenta este aspecto de modo que todas las enfermedades escogidas tengan un número de muestras suficiente para ser representadas de forma equilibrada.
 
 A continuación realizaremos el mismo experimento en relación a los medicamentos con el fin de conocer cuáles son los más recetados de forma general.
 
-```{r estadisticas}
+```{r}
 # 2) Medicamentos más comunes.
 # Repetimos el procedimiento anterior para los medicamentos.
 recuento_medicamentos<-summary(training_dataset$drugName)
@@ -94,7 +99,7 @@ ggplot(data=dataframe, aes(x=medicamentos, y=recuento)) + geom_bar(stat="identit
 ```
 
 Una vez hemos exploradas las enfermedades y medicamentos más comunes, los dos siguientes datos estadísticos consisten en asociar estos dos factores con el objetivo de conocer qué medicamentos más comunes se encuentran asociados a una misma enfermedad y cuáles de las enfermedades más comunes se encuentran asociadas para un mismo medicamento. En esta tercera estadística nos ocuparemos del primer caso. 
-```{r estadisticas}
+```{r}
 # 3) Enfermedades comunes asociadas con un medicamento.
 # Partimos del mismo calculo que en el apartado anterior donde obtenemos los medicamentos mas comunes
 recuento_medicamentos<-summary(training_dataset$drugName)
@@ -130,7 +135,7 @@ Como podemos comprobar, los cinco medicamentos más comunes son especialmente re
  
 Para el siguiente caso realizaremos el mismo cálculo pero en orden inverso, es decir, comprobaremos cuáles son los medicamentos más comunes para una misma enfermedad. De este modo podremos observar los distintos tratamientos que se pueden aplicar a una misma enfermedad además de comprobar su popularidad a la hora de recetar cada uno de ellos.
 
-```{r estadisticas}
+```{r}
 # 4) Medicamentos para cada enfermedad más común.
 # Realizamos el mismo calculo que en el apartado anterior pero adaptandolo al caso contrario
 recuento_enfermedades<-summary(training_dataset$condition)
@@ -155,7 +160,7 @@ En este caso, como se puede ver en las diferentes gráficas, los medicamentos se
 
 En el siguiente dato estadístico estudiaremos la valoración de los medicamentos para cada una de las diez enfermedades más comunes con el objetivo de conocer la eficacia, según los pacientes, de los tratamientos que en general se recetan para cada dolencia. 
 
-```{r estadisticas}
+```{r}
 # 5) Eficacia general de los tratamientos recetados para las diez enfermedades más comunes.
 # 5.1) Puntuación de los medicamentos asociados a "Birth Control".
 # Extraemos un dataset solo con los registros asociados a la enfermedad en cuestión.
@@ -200,11 +205,12 @@ adhd_dataset = subset(training_dataset, training_dataset$condition=="ADHD")
 print("Estadísticas sobre los medicamentos para 'ADHD'.")
 summary(adhd_dataset$rating)
 ```
+
 Como podemos comprobar en los resultados anteriores, si consideramos las medianas calculadas, es decir, la puntuación que se encuentra en la mitad del ranking, las enfermedades cuyos tratamientos, en general, son mejores valorados por los pacientes son *Pain, Anxiety, Acne, Weight Loss* y *Obesity*. Por el contrario, la que peor mediana tiene es *Birth Control*. Una de las ventajas de utilizar la mediana reside en la resistencia asociada a los valores de las puntuaciones, puesto que para calcularla lo único que se necesita es ordenar dichos valores y escoger el que se encuentra en la posición intermedia. Sin embargo, la media sí que se encuentra influida por los valores de las puntuaciones y, por lo tanto, se ve sesgada, principalmente, por los valores más bajos. Sin embargo, a través de esta variable estadística podemos confirmar las mismas conclusiones extraídas anteriormente, y además, nos permite agregar un mayor grado de concreción con respecto a los tratamientos mejor valorados. En este caso, podemos comprobar que la enfermedad cuyos tratamientos son mejor valorados es **Weight Loss, seguida de Obesity y Anxiety**.
 
 A continuación procedemos cuáles son los medicamentos más efectivos, según la población, para estas tres enfermedades, con el objetivo de conocer las puntuaciones de los tratamientos que han provocado los buenos resultados observados anteriormente. Sin embargo, como el número de registros para cada una de las enfermedades es sumamente considerable, vamos a agregar una segunda condición. Esta trata de conseguir los medicamentos que a su vez son los más recetados. De este modo podremos conocer cuáles son los tratamientos más efectivos, según los pacients afectados por las tres enfermedades anteriores, además de los más comúnmente recetados. Con todos estos criterios los resultados, para esta dolencia en concreto, se pueden visualizar a continuación.
 
-```{r estadisticas}
+```{r}
 # 6) Medicamentos con mejores críticas y más veces recetados.
 # 6.1) Para la primera enfermedad: 'Weight Loss'.
 # Extraemos un dataset con las muestras asociadas solo a la enfermedad Weight Loss y con solamente los 
@@ -242,6 +248,7 @@ dataframe<-data.frame(medicamentos=medicamentos[1:10], recuento=recuento[1:10])
 ggplot(data=dataframe,aes(x=medicamentos, y=recuento)) + geom_bar(stat="identity")+coord_flip()+ggtitle('Mejores medicamentos para "Anxiety"')
 
 ```
+
 En el primer gráfico resultante podemos comprobar que existe un medicamento con una puntuación máxima y que, a su vez, es cláramente el más recetado denominado 'Phentermine/topiramate'. Por ello podemos determinar que en función de las críticas de los pacientes afectados por esta dolencia en concreto, este es el tratamiento mejor valorado y más comúnmente recetado.
 
 No sucede lo mismo con el segundo gráfico en el que se muestran los diez medicamentos con una puntuación máxima y, a su vez, lo más recetados. En este caso existen dos tratamientos con un número bastante similar de recetas, por lo que podemos pensar que son los dos medicamentos más eficaces contra esta dolencia además de ser los dos más recetados. 
@@ -252,7 +259,7 @@ Por último, en el tercer gráfico podemos observar que se plantea la misma din�
 
 Realizando el análisis exploratorio anterior, nos percatamos de que existen **reviews repetidas para una misma enfermedad**. Creemos que es debido a que para una misma dolencia se han recetado varios medicamentos y cuando el paciente ha aportado su opinión, esta se ha asignado a cada uno de los tratamientos recetados para la misma enfermedad los cuales ocupan un registro distinto. Por ello, actualmente disponemos de reviews iguales para varias filas dentro del conjunto de datos de entrenamiento y de prueba, asociadas a una misma enfermedad y a los diversos tratamientos recetados para paliarla. Con el objetivo de poder aplicar, posteriormente, los algoritmos vistos en esta asignatura y así obtener resultados representativos, vamos a aplicar un procesamiento equivalente a eliminar aquellos registros que dispongan de la misma crítica tanto en el dataset de entrenamiento como en el de prueba. 
 
-```{r procesamiento_datos}
+```{r}
 ## Conjunto de entrenamiento
 # Eliminamos las filas que tengan la misma crítica.
 new_training_dataset<-training_dataset[!duplicated(training_dataset$review), ]
@@ -266,9 +273,10 @@ new_test_dataset<-test_dataset[!duplicated(test_dataset$review), ]
 reviews_repetidas<-new_test_dataset[duplicated(new_test_dataset$review)]
 ncol(reviews_repetidas)
 ```
+
 Una vez hemos eliminado aquellos registros que disponen de la misma crítica, comenzaremos con el submuestreo del dataset para **reducir su tamaño**. Y es que, tal y como se ha podido comprobar en los resultados estadísticos anteriores, el número de muestras del conjunto de entrenamiento es bastante considerable. Asimismo, también hemos podido comprobar que existen clases de medicamentos con un número de muestras extremadamente mayoritario, como es *Birth Control*, por lo que no todas cuentan con la misma representación dentro del dataset. Es por ello por lo que, a continuación, se procede a aplicar un tratamiento consistente en reducir el conjunto de entrenamiento a 5.000 muestras. Para ello reduciremos el **número de enfermedades a 10 y para cada una de ellas obtendremos 500 muestras**. De este modo equilibramos las diversas clases de medicamentos existentes para, posteriormente, poder aplicar diversos algoritmos.
 
-```{r procesamiento_datos}
+```{r}
 ## CONJUNTO DE ENTRENAMIENTO
 # Obtenemos un resumen acerca de las enfermedades registradas en el dataset.
 recuento_etiquetas<-summary(new_training_dataset$condition)
@@ -302,7 +310,7 @@ Como podemos comprobar en la gráfica anterior, en este dataset reducido ya no h
 
 Del mismo modo procedemos con el **conjunto de prueba** de modo que también cuente con hasta 10 enfermedades diferentes con 500 muestras para cada una de ellas. Para ello repetiremos el mismo proceso anterior.
 
-```{r procesamiento_datos}
+```{r}
 ## CONJUNTO DE PRUEBA
 # Obtenemos un resumen acerca de las enfermedades registradas en el dataset.
 recuento_etiquetas<-summary(new_test_dataset$condition)
@@ -336,7 +344,7 @@ ggplot(data=dataframe, aes(x=enfermedades, y=recuento)) + geom_bar(stat="identit
 
 En este subapartado procedemos a aplicar diversas técnicas para preparar los datos textuales, en especial las *reviews* de los pacientes, para que posteriormente podamos aplicar ciertos algoritmos con mayor facilidad. En primer lugar vamos a crear los vectores de documentos a partir de la columna anteriormente mencionada. Para ello convertiremos cada una de las críticas de los pacientes en un documento y las almacenaremos en un vector común. 
 
-```{r corpus, warning=FALSE}
+```{r warning=FALSE}
 # Cargamos el paquete que nos permitirá aplicar ciertas operaciones sobre textos.
 library("tm")
 # Datos de entrenamiento.
@@ -354,11 +362,12 @@ test_reviews_corpus<-VCorpus(test_reviews_corpus)
 # Mostramos algunos de los documentos obtenidos como ejemplo.
 train_reviews_corpus[[5]]$content
 ```
+
 Tal y como se puede observar, ahora cada una de las *reviews* de los pacientes se encuentra en un documento aparte, es decir, cada una de las opiniones de los pacientes ocupan una posición del vector de documentos. A continuación eliminaremos los **signos de puntuación** de las críticas porque, en principio, no nos aportan información relevante a la hora de aplicar técnicas relacionadas con la minería de textos. Asimismo, también hemos observado que ciertos signos de puntuación, como las comillas, no han sido procesados de forma adecuada y aparecen codificados como números. Obviamente este tipo de términos tampoco nos son útiles, por lo que procedemos, además, a **eliminar los números** de las críticas. Del mismo modo, con el objetivo de aplicar el mismo tratamiento a todas las palabras, procedemos también a **eliminar las mayúsculas**.
 
 Por otro lado cabe destacar que para ciertas técnicas de análisis de textos, como podría ser encontrar los términos más comúnes, existen algunas palabras, en todos los idiomas, cuyo número de apariciones es súmamente considerable pero no aportan ningún tipo de información relevante. Este tipo de términos se pueden clasificar en preposiciones, artículos, entre otros, y en este ámbito se suelen conocer como **stop words**. En nuestro caso, como todas las *reviews* se encuentran en inglés, especificaremos dicho idioma para eliminar este tipo de términos de las críticas de los pacientes. Tras este procedimiento, los términos eliminados dejan espacios en blanco que también vamos a eliminar en este primer preprocesamiento de los datos textuales.
 
-```{r preprocesamiento_textos, warning=false}
+```{r, warning=FALSE}
 # Cargamos la librería que nos permitirá aplicar ciertas técnicas de preprocesamiento de textos.
 library(tm)
 # Datos de entrenamiento.
@@ -383,8 +392,9 @@ test_reviews_corpus<-tm_map(test_reviews_corpus, content_transformer(stripWhites
 # Mostramos un ejemplo de preprocesamiento realizado.
 train_reviews_corpus[[5]]$content
 ```
+
 Como podemos observar, tras este primer preprocesamiento de las *reviews* de los pacientes se presentan textos en los que únicamente aparecen términos que tienen un mayor grado de relevancia para el estudio de este dataset en particular. No obstante, a consecuencia de eliminar palabras, pueden existir documentos sin contenido y por lo tanto no disponen de ninguna utilidad. Este será el siguiente procesamiento que aplicaremos a continuación: **eliminar los documentos vacíos.**
-```{r preprocesamiento_textos}
+```{r}
 # Datos de entrenamiento.
 # Borraremos los documentos que estén vacíos. Para ello los tranformamos en una matriz de documentos.
 train_reviews_matriz<-DocumentTermMatrix(train_reviews_corpus)
@@ -402,9 +412,10 @@ cat("\nDocumentos vacíos en el conjunto de prueba", recuento_palabras[recuento_
 cat("\n\nEstudio de la colección de documentos del conjunto de entrenamiento tras el preprocesamiento.")
 inspect(train_reviews_matriz)
 ```
+
 Tal y como podemos comprobar, en nuestro caso, tras realizar el procedimiento por el cual eliminábamos palabras no relevantes, no existen documentos vacíos de contenido por lo que no podemos descartar ninguno. Asimismo, en función del estudio que se muestra a continuación acerca de la naturaleza de los documentos obtenidos del conjunto de entrenamiento, cabe destacar que se disponen de un total de 5.000 documentos y 11.825 términos. Sin embargo, en la lista de los términos más comunes podemos comprobar que algunos de ellos son variantes de otros, como por ejemplo son *take* y *taking*. Representa la misma información pero sin embargo se identifican como términos diferentes. Para eliminar este tipo de situaciones procedemos a aplicar una técnica conocida como **Lematización o Steaming**. Con ella se descartan aquellas palabras que tengan la misma raíz semántica y solo quedará un término de la misma familia. 
 
-```{r preprocesamiento_textos, warning=false}
+```{r, warning=FALSE}
 # Datos de entrenamiento.
 train_reviews_corpus<-tm_map(train_reviews_corpus, stemDocument)
 train_reviews_matriz<-DocumentTermMatrix(train_reviews_corpus)
@@ -414,12 +425,13 @@ inspect(train_reviews_matriz)
 test_reviews_corpus<-tm_map(test_reviews_corpus, stemDocument)
 test_reviews_matriz<-DocumentTermMatrix(test_reviews_corpus)
 ```
+
 Tras la aplicación de esta última técnica podemos comprobar que se ha producido una reducción razonable de términos pasando a tener menos de 8.500 en total. Asimismo, podemos observar una mejora en relación a los términos más frecuentes puesto que todos ellos son diferentes y por lo tanto todos pueden aportar información relevante a la hora de aplicar los sucesivos algoritmos a lo largo de este documento.
 
 ## Análisis de correlación.
 
 En esta sección vamos a estudiar las relaciones que existen entre todas los campos de nuestro dataset para comprobar si algunos de ellos están correlacionados. Para ello vamos a convertir los atributos categóricos, como las enfermedades y los tratamientos, en valores numéricos sobre los que aplicar el estudio de la correlación. Sin embargo, campos como la fecha en la que se publicó la crítica del paciente así como esta misma, los vamos a omitir puesto que no tiene sentido intentar convertirlos en variables numéricas. 
-```{r correlacion}
+```{r}
 # Copio el dataset original en otro que modificaremos para este apartado.
 df_corr<-mini_training_dataset
 # Eliminamos los campos categóricos puesto que vamos a convertir sus valores en valores numéricos.
@@ -440,6 +452,7 @@ chart.Correlation(df_corr, histogram = F, pch = 19)
 library(corrplot)
 corrplot(matriz_correlacion, method="number", type="upper")
 ```
+
 En la primera imagen podemos comprobar los coeficientes de correlación entre cada par de variables existentes junto con la confianza asociada a esta correlación, representando la máxima con tres estrellas. Tal y como podemos comprobar, las variables que se encuentran más relacionadas son *rating* y *usefulCount* aunque su valor al ser de 0.24 no es considerablemente significante como para establecer una relación de correlación. Asimismo, si bien podemos pensar que los campos asociados a las enfermedades y a los tratamientos podrían mostrar una asociación, como podemos observar, esta no se hace patente a la hora de convertir los valores categóricos a numéricos puesto que de este modo el algoritmo no es capaz de relacionar ambos conceptos.
 
 En la segunda imagen podemos visualizar los coeficientes de correlación entre cada par de variables clasificados y coloreados en función de cuán fuerte es su asociación. Tal y como podemos comprobar, la relación de correlación más fuerte, y por ende, la que dispone de un color más definido, es la que hemos comentado anteriormente: *rating-usefulCount*. El resto de asociaciones no cuentan con valores significativos y por lo tanto, apenas son visibles en la gráfica.
@@ -448,7 +461,7 @@ En la segunda imagen podemos visualizar los coeficientes de correlación entre c
 
 A continuación comprobaremos la importancia de cada uno de los campos que se incluyen en nuestro dataset. El objetivo es utilizar, solamente, aquellas columnas que sean relevantes para el estudio de este dataset en particular. Comenzamos eliminando directamente la columna *uniqueID* en ambos conjuntos de datos puesto que no aporta ningún tipo de información relevante ya que solo representa el identificador único para cada una de los registros del dataset.
 Del mismo modo también vamos a eliminar el campo en el que se recoge la fecha en la que se publicó la crítica puesto que tampoco nos aporta información útil para aplicar los sucesivos algoritmos.
-```{r influencia_variables}
+```{r}
 ## CONJUNTO DE ENTRENAMIENTO
 mini_training_dataset = mini_training_dataset[-1]
 mini_training_dataset = mini_training_dataset[-5]
@@ -465,7 +478,7 @@ Tal y como hemos comentado al comienzo de este documento, una de las columnas m�
 ## Nube de palabras
 
 Una vez disponemos de los datos preprocesados, tanto asociados al conjunto de entrenamiento como al de prueba, procedemos a representar gráficamente los términos obtenidos de los diversos documentos mediante una primera **nube de palabras**, en la cual se ordenarán las palabras de las críticas de los pacientes en función de su número de apariciones. De este modo podremos conocer los términos más utilizados en las *reviews*. Estos serán representados en un mayor tamaño y se irá reduciendo conforme disminuya el número de veces que aparece cada uno de los términos.
-```{r nube_palabras_apariciones}
+```{r}
 library(wordcloud2)
 library(knitr)
 # Convertimos el corpus en una matriz de documentos cuyas filas serán los términos que aparecen en cada uno de ellos.
@@ -476,12 +489,13 @@ frecuencia_terminos<-sort(rowSums(train_reviews_matriz_terminos), decreasing=TRU
 train_reviews_dataframe_ordenado<-data.frame(word=names(frecuencia_terminos), freq=frecuencia_terminos)
 wordcloud2(train_reviews_dataframe_ordenado, size=1.2)
 ```
+
 Tal y como podemos comprobar, la mayor parte de los términos más utilizados por los pacientes a la hora de expresar su opinión acerca de los fármacos recetados están directamente relacionados con el tiempo, como *day*, *year*, entre otros. Posteriormente, podemos observar un segundo grupo de palabras relacionadas con los sentimientos como *feel* o *pain*. Incluso podemos afirmar que dos de las enfermedades que se encuentran en nuestro dataset aparecen esta nube de palabras: *pain* y *anxieti*. Para estudiar más a fondo el contexto en el que se encuentran estos términos a continuación procedemos a analizar los sentimientos que se encuentran tras cada una de las críticas de los pacientes.
 
 ## Análisis de sentimientos
 
 En esta sección trataremos de conocer el grado de satisfacción general de los pacientes con respecto a los tratamientos que se les han recetado para su dolencia particular. Para ello, en primer lugar, procedemos a realizar una análisis general que nos informe acerca de la tendencia global de las críticas. Para ello haremos uso del corpus extraido tras el preprocesamiento de las críticas y le aplicaremos el método ***analyzeSentiment*** de la biblioteca [*SentimentAnalysis*](https://cran.r-project.org/web/packages/SentimentAnalysis/vignettes/SentimentAnalysis.html)  con la cual obtendremos el tipo de sentimiento que se esconde tras cada una de las *reviews*: positivo, negativo o neutro. Para ello este tipo de biblioteca contiene una serie de diccionarios con los términos más relevantes para cada uno de los tres tipos de sentimientos. En nuestro caso particular utilizaremos el diccionario por defecto denominado *QDAP*.
-```{r analisis_sentimientos, warning=false}
+```{r, warning=FALSE}
 library(SentimentAnalysis)
 # Obtenemos los sentimientos generales de las reviews
 train_analisis_sentimientos<-convertToDirection(analyzeSentiment(train_reviews_corpus)$SentimentQDAP) 
@@ -491,11 +505,12 @@ resumen_analisis = summary(train_analisis_sentimientos)
 barplot(resumen_analisis, main = "Análisis de sentimientos de las reviews en train",
      xlab = "Tipo de sentimiento", ylab = "Nº de reviews", col = c("red3", "yellow2", "springgreen3"))
 ```
+
 Como podemos observar en ambos gráficos la gran mayoría de las críticas muestran un **sentimiento positivo**, por lo que podemos deducir que de forma general los pacientes están satisfechos con los tratamientos que han sido recetados para sus respectivas enfermedades. Asimismo, cabe destacar la considerable diferencia entre el número de críticas positivas y negativas. Por último, las críticas asociadas a un sentimiento neutro se corresponden con el grupo minotiratio puesto que es entendemos que es bastante complicado proporcionar una opinión sin demostrar nuestros sentimientos acerca de un fármaco.
 
 A continuación procedemos a profundizar más acerca de los resultados obtenidos anteriormente con el objetivo de conocer cuáles son los sentimientos concretos más comunes que los pacientes demuestran a la hora de opinar sobre sus respectivos tratamientos. Parar ello haremos uso de la librería *syuzhet*, y en concreto de la función *get_nrc_sentiment*, con la cual seremos capaces de medir el número de *reviews* que reflejan alguno de los ocho sentimientos posibles: enfado, expectación miedo, alegría, tristeza, confianza, sorpresa.
 
-```{r analisis_sentimientos, warning=false}
+```{r, warning=FALSE}
 library(syuzhet)
 library("tm")
 library(ggplot2)
@@ -508,32 +523,68 @@ library(RColorBrewer)
 colores<-brewer.pal(8, "Set2")
 barplot(sort(colSums(prop.table(analisis_sentimientos2[, 1:8]))), las=2, col=colores)
 ```
+
 Tal y como podemos comprobar el sentimiento que predomina en las críticas de los pacientes es la confianza, seguido de un segundo sentimiento negativo que es la tristeza y de un tercero que es la expectación. Estos resultados pueden explicar el comportamiento de los seres humanos ante una enfermedad, y es que al ser diagnosticados es normal que sintamos tristeza por la situación actual y por la temporada que nos espera de tratamiento. Asimismo, también es razonable sentir confianza en los fármacos recetados por los especialistas en medicina para tratar nuestra dolencia y que nos hagamos ciertas expectativas acerca de la efectividad del mismo.
 
 # Reglas de asociación
 
 En esta técnica se pretende realizar un análisis acerca de uno de los campos más relevantes del dataset, a nuestro parecer: las *reviews* de los pacientes. Aplicando este procedimiento sobre nuestro conjunto de datos pretendemos extraer las relaciones existentes entre las palabras contenidas en estas críticas que redactan los enfermos asociadas a una determinada enfermedad y a uno o varios tratamientos. De este modo podremos conocer las relaciones existentes entre los términos que son más comunes en las *reviews*.
 
-<<<<<<<<<<<<<<EXPLICAR QUE SE OBTIENEN LOS TÉRMINOS YA SEPARADOS DESDE EL CORPUS PREPROCESADO CON LA FUNCIÓN TEXT_TOKENS>>>>>>>>>>>>>>>>>>>>>>>>>>
-<<<<<<<<<<<<<<<DIBUJAR LOS RESULTADOS>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-<<<<<<<<<<<<<PROBAR VARIANDO EL SOPORTE Y LA CONFIANZA>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-El primer paso que procedemos a realizar consiste en separar los términos de las críticas de modo que obtengamos las palabras individuales y separadas del resto. De este modo, a continuación podremos componer la **base de datos transaccional** en la que cada elemento se corresponde con una única palabra. Una vez dispongamos de los datos preparados podremos obtener las reglas de asociación mediante el paquete ***aRules***. Para ello utilizaremos el algoritmo *apriori*, el cual extrae los conjuntos de palabras más frecuentes y los convierte en reglas de asociación. Como parámetros recibe la base de datos con las transacciones además de argumentos de configuración tales como el soporte y la confianza. 
-```{r asocacion, warning=false}
-# Importamos la librería para obtener las reglas de asociación y la base de datos transaccional
+El primer paso que procedemos a realizar consiste en separar los términos de las críticas de modo que obtengamos las palabras individuales y separadas del resto. Para ello haremos uso de la función *text_tokens* aplicada al corpus creado y preprocesado anteriormente. A continuación podremos componer la **base de datos transaccional** en la que cada elemento se corresponde con una única palabra. Una vez dispongamos de los datos preparados podremos obtener las reglas de asociación mediante el paquete ***aRules***. Para ello utilizaremos el algoritmo *apriori*, el cual extrae los conjuntos de palabras más frecuentes y los convierte en reglas de asociación. Como parámetros recibe la base de datos con las transacciones además de argumentos de configuración tales como el **soporte**, el cual indica el número de tuplas que soportan el proceso de inducción, y la **confianza**, la cual representa la calidad de cada una de las reglas. Para ajustar el primer valor deberemos de conocer el número de transacciones contenidas en la base de datos así como las frecuencias máximas de los términos recogidos en las *reviews*.
+```{r, warning=FALSE}
+# Importamos la librería para obtener los términos del corpus separados.
 library(arules)
 library(corpus)
 # Separamos los términos de cada una de las críticas ya preprocesadas.
 terminos_criticas<-text_tokens(train_reviews_corpus)
 # Convertimos los términos a una base de datos transaccional
 reviews_bd_transaccional<-as(terminos_criticas, "transactions")
+# Obtenemos un resumen acerca de la bd creada.
+cat("\n\nResumen de la base de datos transaccional.\n")
 summary(reviews_bd_transaccional)
-itemFrequencyPlot(reviews_bd_transaccional, topN=10)
-# Obtenemos las reglas de asociación.
-reglas_asoc<-apriori(reviews_bd_transaccional, parameter = list(support = 0.001, confidence = 0.8, target="rules", minlen=2), control = list(memopt = TRUE, load = FALSE))
-reglas_asoc<-sort(reglas_asoc, decreasing=TRUE, by="confidence")
-inspect(head(reglas_asoc,100))
+cat("\n\nFrecuencia de las transacciones.\n")
+summary(itemFrequency(reviews_bd_transaccional))
 ```
 
+Como podemos observar existen 5.000 transacciones dentro de la base de datos obtenida. El término más repetido es *take* con hasta 2187 apariciones y su respectiva frecuencia es de 0.437, la máxima de entre todos los términos. Este valor nos indica el soporte máximo que podemos establecer. Sin embargo, para poder calcular este valor de una forma más precisa necesitamos establecer el número mínimo de apariciones que deseamos para cada uno de los términos y, posteriormente, lo dividimos entre el número total de transacciones. Comenzaremos estableciendo una frecuencia mínima de 500, por lo que el `soporte = 500/5000 = 0.1`. Establecemos el valor por defecto para la confianza: 0.8.
+```{r, warning=FALSE}
+# Importamos la librería para obtener las reglas de asociación y la base de datos transaccional
+library(arules)
+library(arulesViz)
+# Obtenemos las reglas de asociación.
+reglas_asoc<-apriori(reviews_bd_transaccional, parameter = list(support = 0.1, confidence = 0.8, target="rules", minlen=2), control = list(memopt = TRUE, load = FALSE))
+# Ordenamos las reglas obtenidas ordenadas por la confianza.
+reglas_asoc<-sort(reglas_asoc, decreasing=TRUE, by="confidence")
+# Dibujamos las reglas.
+plot(reglas_asoc, method="graph")
+title("Reglas de asociación con soporte=0.1 y confianza=0.8")
+```
+
+Como podemos observar hemos obtenido un total de ocho reglas de asociación, en las que los dos consecuentes más comunes son *side* y *effect*. Esto se debe a que, de forma general, los pacientes tienden a expresar en sus *reviews* los efectos que les producen sus tratamientos. Sin embargo, con un soporte tan alto apenas obtenemos más información, por lo que a continuación estableceremos una frecuencia mínima de 50 apariciones para cada término, obteniendo así un **soporte=0.01**.
+
+```{r, warning=FALSE}
+library(arules)
+library(arulesViz)
+reglas_asoc<-apriori(reviews_bd_transaccional, parameter = list(support = 0.01, confidence = 0.8, target="rules", minlen=2), control = list(memopt = TRUE, load = FALSE))
+reglas_asoc<-sort(reglas_asoc, decreasing=TRUE, by="confidence")
+plot(reglas_asoc, method="graph")
+title("Reglas de asociación con soporte=0.01 y confianza=0.8")
+```
+
+Al disminuir el soporte hemos obtenido un mayor número de información puesto que las reglas obtenidas son menos estrictas a la hora de buscar asociaciones entre los términos de las *reviews* de los pacientes. En este caso podemos observar un mayor número de relaciones entre palabras, como *gain* y *weight*, los cuales están estrechamente relacionados puesto que una de las enfermedades que se encuentra en nuestro dataset es precisamente la pérdida de peso, por lo que es lógico que aparezcan estos dos términos. Del mismo modo ocurre con *birth* y *control*. Asimismo, se ha añadido un consecuente más al núcleo de las reglas de asociación: *take*. Este hecho se explica en relación a que el paciente además de expresar los efectos que tienen los fármacos sobre su dolencia, por lo general también suelen especificar las tomas que realizan de este medicamento durante el tratamiento impuesto por su médico. Es por ello por lo que estos tres términos se encuentran como los consecuentes más comunes de las reglas obtenidas. Relacionado con este aspecto se encuentran los términos asociados con espacios temporales, como *week*, *now*, *month*, entre otros, los cuales aparecen también cercanos al núcleo. 
+
+A continuación procedemos a experimentar con el valor de la **confianza**. Si bien este mide la calidad de las reglas obtenidas, podemos deducir que a menor valor mayor número de reglas de peor calidad. Para ello vamos a realizar un primer experimento con soporte=0.1. Nuestra teoría parte de que si disminuimos la calidad de las reglas que se puedan obtener, aparecerán un mayor número de ellas pese al soporte establecido.
+
+```{r, warning=FALSE}
+library(arules)
+library(arulesViz)
+reglas_asoc<-apriori(reviews_bd_transaccional, parameter = list(support = 0.1, confidence = 0.4, target="rules", minlen=2), control = list(memopt = TRUE, load = FALSE))
+reglas_asoc<-sort(reglas_asoc, decreasing=TRUE, by="confidence")
+plot(reglas_asoc, method="graph")
+title("Reglas de asociación con soporte=0.1 y confianza=0.4")
+```
+
+Tal y como podemos comprobar, en este caso se han podido obtener 52 reglas frente a las ocho que se obtuvieron con un valor de confianza del doble que el actual. No obstante, la calidad de estas reglas disminuye, es decir, las asociaciones de los términos pueden no ser del todo lógicas, como por ejemplo *ive* y *im*, que no aportan ningún tipo de información relevante. Es por ello, por lo que en consecuencia, podemos afirmar que un valor razonablemente alto de la confianza puede inducir a obtener relaciones entre términos que nos aporten información útil, mientras que un soporte demasiado elevado puede provocar cierta pérdida de información al ser tan estrictos con el número de apariciones de cada término.
 
 # Ténicas de Regresión
 
@@ -543,7 +594,7 @@ En esta sección aplicaremos la **regresión lineal simple** consistente en gene
 
 A continuación entrenamos un modelo de regresión simple cuya variable dependiente será el campo ratingBinaryLabel y la variable predictora será la categoría que contiene las puntuaciones originales de los tratamientos: rating. 
 
-```{r regresion_lineal_simple}
+```{r}
 # Recorremos las filas del conjunto de entrenamiento y comprobamos los valores en los intervalos definidos.
 for (i in 1:length(mini_training_dataset$rating)){
   if (mini_training_dataset$rating[i] < 5)
@@ -566,11 +617,12 @@ regresion_lineal = lm(modelo, mini_training_dataset)
 # Comprobamos los resultados del modelo.
 summary(regresion_lineal)
 ```
+
 Tal y como podemos comprobar en el resumen estadístico mostrado en primer lugar, el modelo predictivo es confiable en tanto en cuanto su p-value tanto en el origen como en la pendiente es menor que 0.05. Además, observando el valor del atributo *Multiple R^2* podemos determinar que el modelo es capaz de predecir hasta un 80% de valores del campo *ratingLabel* mediante el atributo *rating*. Para ello aplica la siguiente ecuación, que se obtiene del *intercepto* y de la pendiente calculados préviamente: `rating_binario = -0.0684667 + 0.1173970 * rating_original`. Su interpretación reside en que por cada incremento en una unidad de la variable *rating* se corresponde a 0.117 del valor de *ratingLabel*. 
 
 Sin embargo, para medir la bondad del modelo de una forma más precisa y tradicional, procedemos a definir la siguiente función que es capaz de calcular las predicciones realizadas por el modelo entrenado préviamente, tanto para el conjunto de entrenamiento como para el de test, para posteriormente calcular ambas **tasas de error**. Encapsulamos el código referente a este procedimiento en una función puesto que así podremos reutilizarlo más adelante en los sucesivos modelos de regresión que aplicaremos a nuestro dataset.
 
-```{r regresion_lineal_simple}
+```{r}
 # Función que recibe el modelo de regresión entrenado para realizar las predicciones tanto del conjunto de prueba como del conjunto de entrenamiento y calcula ambas tasas de error. 
 evaluar_modelo_regresion<-function(modelo) {
   # Calculamos la probabilidad de cada muestra de pertenecer a una clase u a otra.
@@ -596,9 +648,10 @@ evaluar_modelo_regresion<-function(modelo) {
 
 evaluar_modelo_regresion(regresion_lineal)
 ```
+
 Tal y como podemos comprobar, la **tasa de error sobre el conjunto de entrenamiento**, como era de esperar es bastante pequeña. Sin embargo, el hecho de que sea 0% no es favorable puesto que, por el contrario, **el error en el conjunto de prueba** es considerablemente alto, por lo tanto podemos reflexionar acerca de si el modelo se ha ajustado demasiado a los datos de entrenamiento y por ello su capacidad de generalización es menor. 
 Asimismo, si analizamos la matriz de confusión, podemos comprobar que existe una alta tasa de errores al clasificar muestras en la categoría 1 mientras que en realidad pertenecen a la clase cuya etiqueta es 0, y viceversa. Con el objetivo de evaluar la calidad del modelo entrenado procedemos a representar la **curva ROC** así como estimar el área existente debajo de la misma.
-```{r regresion_lineal_simple}
+```{r}
 # Función que realiza las predicciones con la función del paquete asociado a la curva ROC para posteriormente pintarla.
 library("ROCR")
 curvaROC<-function(modelo, etiquetas) { 
@@ -619,13 +672,14 @@ curvaROC<-function(modelo, etiquetas) {
 test_probab = predict(regresion_lineal, mini_test_dataset, type=c("response"))
 curvaROC(test_probab, mini_test_dataset$ratingLabel)
 ```
+
 Como podemos comprobar la curva ROC es prácticamente lineal y por ende el área bajo ella es bastante escasa. Este aspecto nos indica que la capacidad de generalización del modelo entrenado es bastante escasa, con lo que explica la tasa de error tan elevada sobre el conjunto de prueba que hemos obtenido préviamente. 
 
 ### Regresión lineal robusta
 
 En esta subsección trataremos de entrenar un modelo predictivo lineal utilizando, para ello, una subtécnica de la anterior denominada **regresión robusta**. Esta técnica presenta ciertas ventajas como la independencia a los *valores atípicos*, los cuales son datos que no siguen el patrón del resto y por lo tanto sus valores son muy dispares. Con este modelo pretendemos mejorar los resultados del anterior así como obtener tasas de error más confiables y robustas. 
 
-```{r regresion_lineal_robusta}
+```{r}
 # Cargamos la librería que nos permitirá entrenar un modelo con esta técnica.
 library(MASS)
 # Entrenamos el modelo.
@@ -639,13 +693,14 @@ evaluar_modelo_regresion(regresion_robusta)
 test_probab = predict(regresion_robusta, mini_test_dataset, type=c("response"))
 curvaROC(test_probab, mini_test_dataset$ratingLabel)
 ```
+
 Tal y como podemos observar en los resultados, el modelo entrenado con *regresión lineal robusta* no proporciona una mejora significativa puesto que tanto las tasas de error sobre ambos conjuntos como el área de la curva ROC siguen indicando que el modelo dispone de una capacidad de generalización bastante escasa. Por lo tanto, podemos concluir que para nuestro dataset un modelo entrenado mediante regresión lineal simple para predecir la efectividad de los tratamientos en función de su puntuación original, no es aconsejable puesto que no llega a tener una buena capacidad de predicción.
 
 ## Regresión logística simple
 
 Aplicaremos esta técnica con el objetivo de entrenar un modelo predictivo capaz de averiguar, para cada muestra, la clase binaria a la que pertenece el tratamiento: 0 (no efectivo) o 1 (efectivo). Para ello se realizará un procedimiento similar al anterior solo que en este caso utilizaremos la función correspondiente a la **regresión logística** para llevar a cabo el entrenamiento del sistema. 
 
-```{r regresion_logistica}
+```{r}
 # Entrenamos un modelo predictivo con regresión logística. Para ello especificamos como variable dependiente la que deseamos predecir, que en nuestro caso será ratingLabel, y como variable predictora la puntuación original en el intervalo [0, 10].
 regresion_logistica = glm(ratingLabel~rating, family=binomial(logit), data=mini_training_dataset)
 # Resumen acerca del modelo entrenado.
@@ -653,12 +708,13 @@ summary(regresion_logistica)
 # Evaluación del modelo entrenado.
 evaluar_modelo_regresion(regresion_logistica)
 ```
+
 Tal y como podemos comprobar el modelo entrenado con la técnica actual no es confiable puesto que ambos campos tienen un p-value muy cercano a 1, por lo que podemos concluir que no puede ser predicha la etiqueta binaria mediante las puntuaciones originales de forma lineal.
 
 ## Regresión polinomial
 
 Si bien los resultados de los modelos predictivos entrenados mediante técnicas lineales no han sido buenos, vamos a aplicar una técnica no lineal con el objetivo de comprobar si la varible binaria *ratingLabel* puede ser predicha mediante modelo polinómico. Para aplicar esta técnica es indispensable incluir algunos componentes no  lineales, como pueden ser nuevos predictores obtenidos a partir de aplicar técnicas sobre los originales como elevarlos a una potencia. Comenzaremos utilizando un polinomio de grado 2, para lo que necesitaremos incluir la variable *rating*, con la que intentamos predecir la clase a la que pertenece cada tratamiento, elevada al cuadrado de la siguiente forma.
-```{r regresion_polinomial}
+```{r}
 # Entrenamos el modelo con regresión polinomial estableciendo un polinomio de grado 2.
 regresion_polinomica = lm(formula=ratingLabel~poly(rating, 2), data=mini_training_dataset)
 # Estudiamos el modelo entrenado.
@@ -671,7 +727,7 @@ Como podemos observar en el estudio del modelo entrenado los *p-values* de todos
 
 A continuación procedemos a representar gráficamente la curva que describe el polinomio calculado para entrenar dicho modelo. Para ello, en primer lugar, debemos de obtener las predicciones para la etiqueta binaria mediante la interpolación de puntos dentro del rango del campo predictor. A mayor número de puntos, más precisa será la representación gráfica.
 
-```{r regresion_polinomial}
+```{r}
 # Interpolación de puntos dentro del rango del campo rating
 rango<-range(mini_training_dataset$rating)
 puntos<-seq(from=rango[1], to=rango[2], by=1)
@@ -687,6 +743,7 @@ lines(x = puntos$rating, predicciones$fit, col = "red", pch = 20)
 lines(x = puntos$rating, intervalo_confianza$inferior, col = "blue", pch = 4)
 lines(x = puntos$rating, intervalo_confianza$superior, col = "blue", pch = 4)
 ```
+
 En esta gráfica queda cláramente representada la relación existente entre la variable *rating* y la etiqueta binaria que deseamos predecir *ratingLabel*. Esta relación consiste en que a mayor puntuación, mayor es la efectividad del tratamiento y por lo tanto se encuentra dentro de la categorái de medicamentos efectivos. 
 
 En base a los estudios realizados con diversas variantes de la regresión, podemos determinar que la **regresión polinómica** ha sido el único con el que hemos obtenido un modelo competitivo, confiable y capaz de clasificar correctamente los tratamientos en efectivos o no efectivos en base a la puntuación, entre 0 y 10, asociada por cada uno de los pacientes afectados. Con ello podemos concluir que nuestro problema **no es lineal*, y por lo tanto no se puede entrenar un modelo lineal para realizar una buena predicción.
