@@ -286,10 +286,10 @@ etiquetas<-names(recuento_etiquetas)
 n_enfermedades_max = 10
 n_muestras_max = 500
 # Primera enfermedad
-mini_training_dataset <- head(subset(new_training_dataset, new_training_dataset$condition==etiquetas[1]), n_muestras_max)
+mini_training_dataset<-head(subset(new_training_dataset, new_training_dataset$condition==etiquetas[1]), n_muestras_max)
 # Resto de enfermedades
 for (i in c(2:n_enfermedades_max)) {
-  mini_training_dataset <- rbind(mini_training_dataset, head(subset(new_training_dataset,
+  mini_training_dataset<-rbind(mini_training_dataset, head(subset(new_training_dataset,
     new_training_dataset$condition==etiquetas[i]), n_muestras_max))
 }
 # Desorganizamos los datos
@@ -342,7 +342,7 @@ ggplot(data=dataframe, aes(x=enfermedades, y=recuento)) + geom_bar(stat="identit
 
 ## Preprocesamiento de datos textuales.
 
-En este subapartado procedemos a aplicar diversas técnicas para preparar los datos textuales, en especial las *reviews* de los pacientes, para que posteriormente podamos aplicar ciertos algoritmos con mayor facilidad. En primer lugar vamos a crear los vectores de documentos a partir de la columna anteriormente mencionada. Para ello convertiremos cada una de las críticas de los pacientes en un documento y las almacenaremos en un vector común. 
+En este subapartado procedemos a aplicar diversas técnicas para preparar los datos textuales, en especial las *reviews* de los pacientes, para que posteriormente podamos aplicar ciertos algoritmos con mayor facilidad. En primer lugar vamos a crear los vectores de documentos a partir de la columna anteriormente mencionada. Para ello convertiremos cada una de las críticas de los pacientes en un documento y las almacenaremos en un vector común denominado *corpus* [2].
 
 ```{r warning=FALSE}
 # Cargamos el paquete que nos permitirá aplicar ciertas operaciones sobre textos.
@@ -352,7 +352,7 @@ library("tm")
 train_reviews<-as.vector(mini_training_dataset$review)
 # Lo convertimos en un documento y lo almacenamos en el corpus que posteriormente crearemos.
 train_reviews_corpus<-VectorSource(train_reviews)
-train_reviews_corpus<-Corpus(train_reviews_corpus)
+train_reviews_corpus<-VCorpus(train_reviews_corpus)
 
 # Datos de test.
 test_reviews<-as.vector(mini_test_dataset$review)
@@ -365,7 +365,7 @@ train_reviews_corpus[[5]]$content
 
 Tal y como se puede observar, ahora cada una de las *reviews* de los pacientes se encuentra en un documento aparte, es decir, cada una de las opiniones de los pacientes ocupan una posición del vector de documentos. A continuación eliminaremos los **signos de puntuación** de las críticas porque, en principio, no nos aportan información relevante a la hora de aplicar técnicas relacionadas con la minería de textos. Asimismo, también hemos observado que ciertos signos de puntuación, como las comillas, no han sido procesados de forma adecuada y aparecen codificados como números. Obviamente este tipo de términos tampoco nos son útiles, por lo que procedemos, además, a **eliminar los números** de las críticas. Del mismo modo, con el objetivo de aplicar el mismo tratamiento a todas las palabras, procedemos también a **eliminar las mayúsculas**.
 
-Por otro lado cabe destacar que para ciertas técnicas de análisis de textos, como podría ser encontrar los términos más comúnes, existen algunas palabras, en todos los idiomas, cuyo número de apariciones es súmamente considerable pero no aportan ningún tipo de información relevante. Este tipo de términos se pueden clasificar en preposiciones, artículos, entre otros, y en este ámbito se suelen conocer como **stop words**. En nuestro caso, como todas las *reviews* se encuentran en inglés, especificaremos dicho idioma para eliminar este tipo de términos de las críticas de los pacientes. Tras este procedimiento, los términos eliminados dejan espacios en blanco que también vamos a eliminar en este primer preprocesamiento de los datos textuales.
+Por otro lado cabe destacar que para ciertas técnicas de análisis de textos, como podría ser encontrar los términos más comúnes, existen algunas palabras, en todos los idiomas, cuyo número de apariciones es súmamente considerable pero no aportan ningún tipo de información relevante. Este tipo de términos se pueden clasificar en preposiciones, artículos, entre otros, y en este ámbito se suelen conocer como **stop words**. En nuestro caso, como todas las *reviews* se encuentran en inglés, especificaremos dicho idioma para eliminar este tipo de términos de las críticas de los pacientes. Tras este procedimiento, los términos eliminados dejan espacios en blanco que también vamos a eliminar en este primer preprocesamiento de los datos textuales. Para todo este proceso utilizaremos la librería *tm* especializada para el análisis y preprocesamiento de textos, y en particular la función *tm_map* [3].
 
 ```{r, warning=FALSE}
 # Cargamos la librería que nos permitirá aplicar ciertas técnicas de preprocesamiento de textos.
@@ -393,7 +393,7 @@ test_reviews_corpus<-tm_map(test_reviews_corpus, content_transformer(stripWhites
 train_reviews_corpus[[5]]$content
 ```
 
-Como podemos observar, tras este primer preprocesamiento de las *reviews* de los pacientes se presentan textos en los que únicamente aparecen términos que tienen un mayor grado de relevancia para el estudio de este dataset en particular. No obstante, a consecuencia de eliminar palabras, pueden existir documentos sin contenido y por lo tanto no disponen de ninguna utilidad. Este será el siguiente procesamiento que aplicaremos a continuación: **eliminar los documentos vacíos.**
+Como podemos observar, tras este primer preprocesamiento de las *reviews* de los pacientes se presentan textos en los que únicamente aparecen términos que tienen un mayor grado de relevancia para el estudio de este dataset en particular. No obstante, a consecuencia de eliminar palabras, pueden existir documentos sin contenido y por lo tanto no disponen de ninguna utilidad. Este será el siguiente procesamiento que aplicaremos a continuación: **eliminar los documentos vacíos.** [3].
 ```{r}
 # Datos de entrenamiento.
 # Borraremos los documentos que estén vacíos. Para ello los tranformamos en una matriz de documentos.
@@ -413,7 +413,7 @@ cat("\n\nEstudio de la colección de documentos del conjunto de entrenamiento tr
 inspect(train_reviews_matriz)
 ```
 
-Tal y como podemos comprobar, en nuestro caso, tras realizar el procedimiento por el cual eliminábamos palabras no relevantes, no existen documentos vacíos de contenido por lo que no podemos descartar ninguno. Asimismo, en función del estudio que se muestra a continuación acerca de la naturaleza de los documentos obtenidos del conjunto de entrenamiento, cabe destacar que se disponen de un total de 5.000 documentos y 11.825 términos. Sin embargo, en la lista de los términos más comunes podemos comprobar que algunos de ellos son variantes de otros, como por ejemplo son *take* y *taking*. Representa la misma información pero sin embargo se identifican como términos diferentes. Para eliminar este tipo de situaciones procedemos a aplicar una técnica conocida como **Lematización o Steaming**. Con ella se descartan aquellas palabras que tengan la misma raíz semántica y solo quedará un término de la misma familia. 
+Tal y como podemos comprobar, en nuestro caso, tras realizar el procedimiento por el cual eliminábamos palabras no relevantes, no existen documentos vacíos de contenido por lo que no podemos descartar ninguno. Asimismo, en función del estudio que se muestra a continuación acerca de la naturaleza de los documentos obtenidos del conjunto de entrenamiento, cabe destacar que se disponen de un total de 5.000 documentos y 11.825 términos. Sin embargo, en la lista de los términos más comunes podemos comprobar que algunos de ellos son variantes de otros, como por ejemplo son *take* y *taking*. Representa la misma información pero sin embargo se identifican como términos diferentes. Para eliminar este tipo de situaciones procedemos a aplicar una técnica conocida como **Lematización o Steaming**. Con ella se descartan aquellas palabras que tengan la misma raíz semántica y solo quedará un término de la misma familia [3].
 
 ```{r, warning=FALSE}
 # Datos de entrenamiento.
@@ -430,7 +430,7 @@ Tras la aplicación de esta última técnica podemos comprobar que se ha produci
 
 ## Análisis de correlación.
 
-En esta sección vamos a estudiar las relaciones que existen entre todas los campos de nuestro dataset para comprobar si algunos de ellos están correlacionados. Para ello vamos a convertir los atributos categóricos, como las enfermedades y los tratamientos, en valores numéricos sobre los que aplicar el estudio de la correlación. Sin embargo, campos como la fecha en la que se publicó la crítica del paciente así como esta misma, los vamos a omitir puesto que no tiene sentido intentar convertirlos en variables numéricas. 
+En esta sección vamos a estudiar las relaciones que existen entre todas los campos de nuestro dataset para comprobar si algunos de ellos están correlacionados. Para ello vamos a convertir los atributos categóricos, como las enfermedades y los tratamientos, en valores numéricos sobre los que aplicar el estudio de la correlación tal y como se lleva a cabo en este tutorial [4]. Sin embargo, campos como la fecha en la que se publicó la crítica del paciente así como esta misma, los vamos a omitir puesto que no tiene sentido intentar convertirlos en variables numéricas.
 ```{r}
 # Copio el dataset original en otro que modificaremos para este apartado.
 df_corr<-mini_training_dataset
@@ -477,7 +477,7 @@ Tal y como hemos comentado al comienzo de este documento, una de las columnas m�
 
 ## Nube de palabras
 
-Una vez disponemos de los datos preprocesados, tanto asociados al conjunto de entrenamiento como al de prueba, procedemos a representar gráficamente los términos obtenidos de los diversos documentos mediante una primera **nube de palabras**, en la cual se ordenarán las palabras de las críticas de los pacientes en función de su número de apariciones. De este modo podremos conocer los términos más utilizados en las *reviews*. Estos serán representados en un mayor tamaño y se irá reduciendo conforme disminuya el número de veces que aparece cada uno de los términos.
+Una vez disponemos de los datos preprocesados, tanto asociados al conjunto de entrenamiento como al de prueba, procedemos a representar gráficamente los términos obtenidos de los diversos documentos mediante una primera **nube de palabras**, en la cual se ordenarán las palabras de las críticas de los pacientes en función de su número de apariciones. De este modo podremos conocer los términos más utilizados en las *reviews*. Estos serán representados en un mayor tamaño y se irá reduciendo conforme disminuya el número de veces que aparece cada uno de los términos. Para dibujar la nube de palabras utilizaremos la librería *wordcloud2* [5] que es capaz de realizar gráficos más interesantes y vistosos que el paquete wordcloud convencional.
 ```{r}
 library(wordcloud2)
 library(knitr)
@@ -494,7 +494,7 @@ Tal y como podemos comprobar, la mayor parte de los términos más utilizados po
 
 ## Análisis de sentimientos
 
-En esta sección trataremos de conocer el grado de satisfacción general de los pacientes con respecto a los tratamientos que se les han recetado para su dolencia particular. Para ello, en primer lugar, procedemos a realizar una análisis general que nos informe acerca de la tendencia global de las críticas. Para ello haremos uso del corpus extraido tras el preprocesamiento de las críticas y le aplicaremos el método ***analyzeSentiment*** de la biblioteca [*SentimentAnalysis*](https://cran.r-project.org/web/packages/SentimentAnalysis/vignettes/SentimentAnalysis.html)  con la cual obtendremos el tipo de sentimiento que se esconde tras cada una de las *reviews*: positivo, negativo o neutro. Para ello este tipo de biblioteca contiene una serie de diccionarios con los términos más relevantes para cada uno de los tres tipos de sentimientos. En nuestro caso particular utilizaremos el diccionario por defecto denominado *QDAP*.
+En esta sección trataremos de conocer el grado de satisfacción general de los pacientes con respecto a los tratamientos que se les han recetado para su dolencia particular. Para ello, en primer lugar, procedemos a realizar una análisis general que nos informe acerca de la tendencia global de las críticas tal y como se realiza en este estudio [6]. Utilizaremos el corpus extraido tras el preprocesamiento de las críticas y le aplicaremos el método **analyzeSentiment** de la biblioteca *SentimentAnalysis* [7] con la cual obtendremos el tipo de sentimiento que se esconde tras cada una de las *reviews*: positivo, negativo o neutro. Para ello este tipo de biblioteca contiene una serie de diccionarios con los términos más relevantes para cada uno de los tres tipos de sentimientos. En nuestro caso particular utilizaremos el diccionario por defecto denominado *QDAP*.
 ```{r, warning=FALSE}
 library(SentimentAnalysis)
 # Obtenemos los sentimientos generales de las reviews
@@ -530,7 +530,9 @@ Tal y como podemos comprobar el sentimiento que predomina en las críticas de lo
 
 En esta técnica se pretende realizar un análisis acerca de uno de los campos más relevantes del dataset, a nuestro parecer: las *reviews* de los pacientes. Aplicando este procedimiento sobre nuestro conjunto de datos pretendemos extraer las relaciones existentes entre las palabras contenidas en estas críticas que redactan los enfermos asociadas a una determinada enfermedad y a uno o varios tratamientos. De este modo podremos conocer las relaciones existentes entre los términos que son más comunes en las *reviews*.
 
-El primer paso que procedemos a realizar consiste en separar los términos de las críticas de modo que obtengamos las palabras individuales y separadas del resto. Para ello haremos uso de la función *text_tokens* aplicada al corpus creado y preprocesado anteriormente. A continuación podremos componer la **base de datos transaccional** en la que cada elemento se corresponde con una única palabra. Una vez dispongamos de los datos preparados podremos obtener las reglas de asociación mediante el paquete ***aRules***. Para ello utilizaremos el algoritmo *apriori*, el cual extrae los conjuntos de palabras más frecuentes y los convierte en reglas de asociación. Como parámetros recibe la base de datos con las transacciones además de argumentos de configuración tales como el **soporte**, el cual indica el número de tuplas que soportan el proceso de inducción, y la **confianza**, la cual representa la calidad de cada una de las reglas. Para ajustar el primer valor deberemos de conocer el número de transacciones contenidas en la base de datos así como las frecuencias máximas de los términos recogidos en las *reviews*.
+Inspirándonos en este estudio [8], el primer paso que procedemos a realizar consiste en separar los términos de las críticas de modo que obtengamos las palabras individuales y separadas del resto. Para ello haremos uso de la función *text_tokens* aplicada al corpus creado y preprocesado anteriormente. A continuación podremos componer la **base de datos transaccional** en la que cada elemento se corresponde con una única palabra. Una vez dispongamos de los datos preparados podremos obtener las reglas de asociación mediante el paquete ***aRules***. Para ello utilizaremos el algoritmo *apriori*[9], el cual extrae los conjuntos de palabras más frecuentes y los convierte en reglas de asociación. Como parámetros recibe la base de datos con las transacciones además de argumentos de configuración tales como el **soporte**, el cual indica el número de tuplas que soportan el proceso de inducción, y la **confianza**, la cual representa la calidad de cada una de las reglas. Además, para que sea aún más eficiente también estableceremos ciertos parámetros de rendimiento para que no cargue en memoria todas las reglas que obtenga. Asimismo también le indicamos que comience a anaizar reglas con dos términos mínimo.
+
+Según esta fuente [10], para ajustar el primer valor deberemos de conocer el número de transacciones contenidas en la base de datos así como las frecuencias máximas de los términos recogidos en las *reviews*.
 ```{r, warning=FALSE}
 # Importamos la librería para obtener los términos del corpus separados.
 library(arules)
@@ -585,6 +587,113 @@ title("Reglas de asociación con soporte=0.1 y confianza=0.4")
 ```
 
 Tal y como podemos comprobar, en este caso se han podido obtener 52 reglas frente a las ocho que se obtuvieron con un valor de confianza del doble que el actual. No obstante, la calidad de estas reglas disminuye, es decir, las asociaciones de los términos pueden no ser del todo lógicas, como por ejemplo *ive* y *im*, que no aportan ningún tipo de información relevante. Es por ello, por lo que en consecuencia, podemos afirmar que un valor razonablemente alto de la confianza puede inducir a obtener relaciones entre términos que nos aporten información útil, mientras que un soporte demasiado elevado puede provocar cierta pérdida de información al ser tan estrictos con el número de apariciones de cada término.
+
+# Técnicas de clasificación.
+
+La clasificación es un proceso consistente en aprender una determinada función con el objetivo, generalmente, de realizar predicciones futuras. De este modo se entrena un clasificador aportando un conjunto de datos de entrenamiento así como las etiquetas asociadas para que ajuste sus pesos y, posteriormente, sea capaz de predecir las etiquetas de un conjunto de prueba nunca visto anteriormente. En esta sección se entrenarán diferentes clasificadores a partir de la aplicación de las técnicas más populares. Nuestro objetivo principal se encuentra inspirado por el reto de *Kaggle*[1] en el cual se propone **predecir la enfermedad del paciente en función de su comentario**. Por ello las sucesivas técnicas que se detallan a continuación han sido aplicadas sobre el texto correspondiente a las *reviews* de los pacientes ya preprocesados. 
+
+## Clasificación Bayesiana
+
+Es un método probabilístico que determina la clase más probable a la que pertenece un elemento aplicando, para ello, el teorema de Bayes. Es comunmente utilizado cuando existe una componente aleatoria que provoca que dos elementos iguales estén categorizados en clases diferentes. Este aspecto encaja bastante bien con las críticas de los pacientes puesto que si bien sus términos pueden ser parecidos, en realidad sendos pacientes pueden sufrir dolencias diferentes. 
+
+Para aplicar esta técnica nos hemos basado en estos dos tutoriales [11, 12]. Como primer paso se deberá asignar a cada una de las enfermedades disponibles, tanto en el conjunto de entrenamiento como en el de test, una etiqueta numérica unívoca, que sea capaz de identificarla de forma individual. Para ello utilizamos la función *factor* tal y como se muestra en este tutorial [13], la cual realizará este mismo proceso descrito obteniendo mediante *as.numeric* las etiquetas numéricas del 1 al 10 asociadas a cada una de las enfermedades de ambos dataset. Tras visualizar el resultado obtenido podemos afirmar que estas etiquetas numéricas se asignan de menor a mayor en función del orden alfabético, por lo que las dolencias que comiencen por *A* dispondrán de los primeros valores.
+A continuación obtenemos la matriz de documentos que contiene las *reviews* de los pacientes, como hemos realizado en anteriores técnicas, solo que en este caso solo nos vamos a quedar con aquellos con una frecuencia mínima de cinco apariciones. De este modo reducimos el número de palabras y consideraremos solo las más relevantes. Por último entrenamos el clasificador con el conjunto de entrenamiento y las etiquetas asociadas a las dolencias y mediremos su bondad a través de la tasa de error y de la matriz de confusión.
+
+```{r}
+library(tm)
+library(e1071)
+# Asignamos a cada enfermedad diferente una etiqueta de 0 a 10 y la añadimos como una columna más a ambos datasets.
+trainNCondition<-as.numeric(factor(mini_training_dataset$condition))
+testNCondition<-as.numeric(factor(mini_test_dataset$condition))
+mini_training_dataset<-cbind(trainNCondition, mini_training_dataset)
+mini_test_dataset<-cbind(testNCondition, mini_test_dataset)
+
+# Obtenemos la matriz de los términos de las reviews de los conjuntos de entrenamiento y test.
+train_reviews_matriz<-DocumentTermMatrix(train_reviews_corpus)
+test_reviews_matriz<-DocumentTermMatrix(test_reviews_corpus)
+# Nos quedamos con los términos más frecuentes (con un mínimo número de aparciciones de 5)
+terminos_frecuentes<-findFreqTerms(train_reviews_matriz, 5)
+# Obtenemos de nuevo la matriz con los términos más frecuentes extraidos anteriormente tanto para train como para test.
+train_reviews_frec_matriz<-DocumentTermMatrix(train_reviews_corpus, control=list(dictionary=terminos_frecuentes))
+test_reviews_frec_matriz<-DocumentTermMatrix(test_reviews_corpus, control=list(dictionary=terminos_frecuentes))
+# Función que transforma la frecuencia de los términos a una clase binaria: están o no están. 
+frecuencia_binaria<-function(x) { y<-ifelse(x > 0, "Yes", "No") }
+# Obtenemos la matriz de los términos definiendo para cada uno si pertenece a la clase "No" (no está) o a la clase "Yes" (sí aparece)
+train_reviews_matriz_bin<-apply(train_reviews_frec_matriz, 2, frecuencia_binaria)
+test_reviews_matriz_bin<-apply(test_reviews_frec_matriz, 2, frecuencia_binaria)
+# Entrenamos el modelo con Naive Bayes binario
+clasificador_naive<-naiveBayes(train_reviews_matriz_bin, as.factor(mini_training_dataset$trainNCondition), laplace = 1)
+# Obtenemos las predicciones que hace el modelo sobre el conjunto de entrenamiento y de test.
+train_pred<-predict(clasificador_naive, train_reviews_matriz_bin)
+test_pred<-predict(clasificador_naive, test_reviews_matriz_bin)
+# Calculamos sus errores
+error_train<-mean(train_pred!=mini_training_dataset$trainNCondition)
+error_test<-mean(test_pred!=mini_test_dataset$testNCondition)
+# Mostramos los datos más relevantes.
+cat("Orden de asignación de etiquetas 1-10\n")
+cat(levels(factor(mini_training_dataset$condition)))
+test_matriz_confusion_naive<-table(test_pred, mini_test_dataset$testNCondition)
+cat("\n\nError en train: ", error_train*100,"% \nError en test: ",error_test*100,"%")
+cat("\n\nMatriz de confusión en test\n")
+print(test_matriz_confusion_naive)
+```
+
+Tal y como podemos comprobar ambas tasas de error no son competitivas pero sí son razonablemente aceptables, teniendo en cuenta que el problema de clasificación planteado no es nada sencillo, puesto que el clasificador debe elegir una de las diez enfermedades posibles basándose solo en el contenido de las críticas preprocesadas de los pacientes. Estas, en la gran mayoría de ocasiones, no permiten al cien por cien conocer cuál es la dolencia a la que se enfrenta dicha persona puesto que suelen estar más enfocadas a la opinión suministrada en función de la efectividad del medicamento más que de la descripción de la propia enfermedad.
+Si analizamos la **matriz de confusión** podemos comprobar como en la mayoría de los casos no existe un número muy pronunciado de falsos positivos, exceptuando en la etiqueta 8, cuya enfermedad asociada *Insomnia* es bastante confundida con la relacionada a la etiqueta 10 que es *Weight Loss*, y viceversa. Esto nos lleva a pensar que los comentarios de los pacientes que padecen ambas enfermedades utilizan términos muy parecidos que confunden al clasificador.
+
+## K-NN
+
+Se trata de una de las técnicas predictivas que se encuentran dentro de la clasificación basada en instancias. Este algoritmo denominado **K-vecinos más cercanos** selecciona los *k* elementos más parecidos a un determinado ejemplo y les asigna la clase más frecuente. Si bien este método está pensado para trabajar con variables numéricas, vamos a aplicarlo de nuevo a la predicción de la enfermedad en base a las *reviews* de los pacientes, como con la técnica anterior.  
+
+```{r}
+library(kknn)
+################### MALOS RESULTADOS, MEJORES CON ratingLabel~rating
+df<-as.data.frame(train_reviews_matriz_bin, stringsAsfactors = FALSE)
+df<-cbind(df, trainNCondition)
+df_test<-as.data.frame(test_reviews_matriz_bin, stringsAsfactors = FALSE)
+df_test<-cbind(df_test, testNCondition)
+knn<-kknn(df$trainNCondition~., df, df_test, k=5)
+summary(knn)
+fit=fitted(knn)
+tt=table(fit, df_test$testNCondition)
+tt
+dd=diag(tt)
+bien=sum(dd)
+bien_clasificados=(bien/nrow(df_test))*100
+#Bien y mal clasificados
+bien_knn=bien_clasificados
+bien_clasificados
+100-bien_clasificados
+#Precision, Recall y F-measure
+ft=0 
+m=c(1:nrow(tt))
+n=m
+prec=n
+rec=m
+fmes=m
+for(i in 1:nrow(tt)){m[i]=sum(tt[i,])}
+for(i in 1:nrow(tt)){n[i]=sum(tt[,i])}
+for(i in 1:nrow(tt)){prec[i]=dd[i]/m[i]}
+for(i in 1:nrow(tt)){rec[i]=dd[i]/n[i]} 
+for(i in 1:nrow(tt)){fmes[i]=2*dd[i]/(m[i]+n[i])}
+ft=0
+for(i in 1:nrow(tt)){ft=ft+(fmes[i]/nrow(tt))}
+#Precision
+prec
+
+#Recall
+rec
+#F-measure
+fmes
+#F-measure total
+ft
+ft_knn=ft
+```
+
+## Árboles de decisión
+
+## Random Forest
+
 
 # Ténicas de Regresión
 
@@ -751,3 +860,15 @@ En base a los estudios realizados con diversas variantes de la regresión, podem
 # Bibliografía
 
 1. Jessica Li, Kaggle University Club Hackathon, *UCI ML Drug Review Dataset*, https://www.kaggle.com/jessicali9530/kuc-hackathon-winter-2018#drugsComTrain_raw.csv
+2. *Introduction to Corpus*, https://cran.r-project.org/web/packages/corpus/vignettes/corpus.html
+3. Ingo Feinerer, 12/12/2019, *Introduction to the tm Package, Text Mining in R*, https://cran.r-project.org/web/packages/tm/vignettes/tm.pdf
+4. Oscar Ramírez-Alán, *Correlación y Regresión Lineal*, 9/10/2017, https://rpubs.com/osoramirez/316691
+5. *Wordcloud2 introduction*, 03/01/2018, https://cran.r-project.org/web/packages/wordcloud2/vignettes/wordcloud.html
+6. Julia Silge, David Robinson, *Sentiment analysis with tidy data*, 24/11/2019, https://www.tidytextmining.com/sentiment.html
+7. Stefan Feuerriegel, Nicolas Proellochs, *SentimentAnalysis Vignette*, 26/03/2019, https://cran.r-project.org/web/packages/SentimentAnalysis/vignettes/SentimentAnalysis.html
+8. Joaquín Amat Rodrigo, *Reglas de asociación y algoritmo Apriori con R*, 2018, https://rpubs.com/Joaquin_AR/397172
+9. RDocumentation, *apriori*, https://www.rdocumentation.org/packages/arules/versions/1.6-4/topics/apriori
+10. Stackoverflow, *How can we find support and confident in apriori for rules?*, 2018, https://stackoverflow.com/questions/43588163/how-can-we-find-support-and-confident-in-apriori-for-rules
+11. Aisha Javed, *A Deep Dive into Naïve Bayes for Text Classification*, 25/10/2018, https://blog.datasciencedojo.com/unfolding-naive-bayes-from-scratch-part-1/
+12. Rohit Katti, *Naive Bayes Classification for Sentiment Analysis of Movie Reviews*, 30/04/2016, https://rpubs.com/cen0te/naivebayes-sentimentpolarity
+13. *Understanding Factors*, https://swcarpentry.github.io/r-novice-inflammation/12-supp-factors/index.html
