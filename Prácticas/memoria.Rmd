@@ -643,65 +643,97 @@ Si analizamos la **matriz de confusión** podemos comprobar como en la mayoría 
 
 ## K-NN
 
-Se trata de una de las técnicas predictivas que se encuentran dentro de la clasificación basada en instancias. Este algoritmo denominado **K-vecinos más cercanos** selecciona los *k* elementos más parecidos a un determinado ejemplo y les asigna la clase más frecuente. Si bien este método está pensado para trabajar con variables numéricas, vamos a aplicarlo de nuevo a la predicción de la enfermedad en base a las *reviews* de los pacientes, como con la técnica anterior.  
+Se trata de una de las técnicas predictivas que se encuentran dentro de la clasificación basada en instancias. Este algoritmo denominado **K-vecinos más cercanos** selecciona los *k* elementos más parecidos a un determinado ejemplo y les asigna la clase más frecuente. Si bien este método está pensado para trabajar con variables numéricas, vamos a aplicarlo de nuevo a la predicción de la enfermedad en base a las *reviews* de los pacientes, como con la técnica anterior. 
+
+
+CAMBIAR A 
+1) Probamos con la librería kknn pero hay muy pocos ejemplos y nos da un 99% de error.
+2) Ejemplos con la librería class y knn y nos da un 34.86667% de aciertos con k=1
+
+
+Comenzamos esta sección probando la librería *kknn* vista en clase para entrenar un clasificador utilizando la técnica que nos ocupa en cuestión. Para ello hemos aplicado el mismo procedimiento que en la técnica anterior, con la única particularidad de modificar la función encargada de decidir si un término es considerado o no en función de su número de apariciones. Y es que para este algoritmo hemos tenido que convertir la salida que proporciona dicha función en un factor para que pueda trabajar con ella. Finalmente se transforma la matriz de términos obtenida a un *dataframe*, añadiéndole la columna de clasificación de las enfermedades (de 1 a 10) y entrenamos el clasificador.
 
 ```{r}
-library(kknn)
-################### MALOS RESULTADOS, MEJORES CON ratingLabel~rating
-df<-as.data.frame(train_reviews_matriz_bin, stringsAsfactors = FALSE)
-df<-cbind(df, trainNCondition)
-df_test<-as.data.frame(test_reviews_matriz_bin, stringsAsfactors = FALSE)
-df_test<-cbind(df_test, testNCondition)
-knn<-kknn(df$trainNCondition~., df, df_test, k=5)
-summary(knn)
-fit=fitted(knn)
-tt=table(fit, df_test$testNCondition)
-tt
-dd=diag(tt)
-bien=sum(dd)
-bien_clasificados=(bien/nrow(df_test))*100
-#Bien y mal clasificados
-bien_knn=bien_clasificados
-bien_clasificados
-100-bien_clasificados
-#Precision, Recall y F-measure
-ft=0 
-m=c(1:nrow(tt))
-n=m
-prec=n
-rec=m
-fmes=m
-for(i in 1:nrow(tt)){m[i]=sum(tt[i,])}
-for(i in 1:nrow(tt)){n[i]=sum(tt[,i])}
-for(i in 1:nrow(tt)){prec[i]=dd[i]/m[i]}
-for(i in 1:nrow(tt)){rec[i]=dd[i]/n[i]} 
-for(i in 1:nrow(tt)){fmes[i]=2*dd[i]/(m[i]+n[i])}
-ft=0
-for(i in 1:nrow(tt)){ft=ft+(fmes[i]/nrow(tt))}
-#Precision
-prec
+#library(tm)
+# Obtenemos la matriz de los términos de las reviews de los conjuntos de entrenamiento y test.
+# train_reviews_matriz<-DocumentTermMatrix(train_reviews_corpus)
+# test_reviews_matriz<-DocumentTermMatrix(test_reviews_corpus)
+# # Nos quedamos con los términos más frecuentes (con un mínimo número de aparciciones de 5)
+# terminos_frecuentes<-findFreqTerms(train_reviews_matriz, 1)
+# # Obtenemos de nuevo la matriz con los términos más frecuentes extraidos anteriormente tanto para train como para test.
+# train_reviews_frec_matriz<-DocumentTermMatrix(train_reviews_corpus, control=list(dictionary=terminos_frecuentes))
+# test_reviews_frec_matriz<-DocumentTermMatrix(test_reviews_corpus, control=list(dictionary=terminos_frecuentes))
+# # Función que decide si tener en cuenta o no el término en función de su número de apariciones.
+# frecuencia_binaria<-function(x) { y<-ifelse(x > 0, "Yes", "No") }
+# # Obtenemos las matrices de términos tanto de train como de test.
+# train_reviews_matriz_bin2<-apply(train_reviews_frec_matriz, 2, frecuencia_binaria)
+# test_reviews_matriz_bin2<-apply(test_reviews_frec_matriz, 2, frecuencia_binaria)
 
-#Recall
-rec
-#F-measure
-fmes
-#F-measure total
-ft
-ft_knn=ft
+### Validación cruzada
+library(tm)
+library(class)
+train_reviews_matriz<-DocumentTermMatrix(train_reviews_corpus)
+# Transform dtm to matrix and then back into a data frame for modeling
+mat.df <- as.data.frame(data.matrix(train_reviews_matriz), stringsAsfactors = FALSE)
+# Column bind category (known classification)
+mat.df <- cbind(mat.df, trainNCondition, row.names = NULL)
+colnames(mat.df)[ncol(mat.df)] <- "trainNCondition"
+# Classifier variable based on the personality typ
+cl <- mat.df[,"trainNCondition"]
+# Create model data and remove “type”
+modeldata <- mat.df[,!colnames(mat.df) %in% "trainNCondition"]
+train <- sample(nrow(mat.df), ceiling(nrow(mat.df) * .70))
+test <- (1:nrow(mat.df))[- train]
+knn.pred <- knn(modeldata[train, ], modeldata[test, ], cl[train])
+conf.mat <- table("Predictions" = knn.pred, Actual = cl[test])
+conf.mat
+(accuracy <- sum(diag(conf.mat))/length(test) * 100)
+
+######### 99% / con train_reviews_matriz_bin sale 89%
+# # Importamos la librería del algoritmo KNN.
+# library(kknn)
+# # Convertimos la matriz a un dataframe y le añadimos la columna de clasificación de las enfermedades.
+# df<-as.data.frame(data.matrix(train_reviews_matriz), stringsAsfactors = FALSE)
+# df<-cbind(df, trainNCondition)
+# df_test<-as.data.frame(data.matrix(train_reviews_matriz), stringsAsfactors = FALSE)
+# df_test<-cbind(df_test, testNCondition)
+# # Entrenamos el modelo.
+# #knn<-kknn(df$trainNCondition~., df, df_test, na.action=na.omit(), k=5)
+# knn<-train.kknn(df$trainNCondition~., df, kmax=5)
+# # Obtenemos las predicciones del modelo y su tasa de error sobre test.
+# prediccs<-fitted(knn)
+# matriz_confusion<-table(prediccs, df_test$testNCondition)
+# dd<-diag(matriz_confusion)
+# accuracy<-(sum(dd)/nrow(df_test))*100
+# test_error<-100-accuracy
+# cat("\nError en test:",test_error,"%")
 ```
+
+Intentamos mejorar el clasificador haciendo uso de la librería *class* [13], en la cual se encuentra la función *knn* especializada en entrenar modelos aplicando la técnica que nos ocupa. Cabe destacar, además, la cantidad de tutoriales existentes, tales como [14], en los que se muestra cómo ejecutar esta función pasándole como datos de entrada texto con el objetivo de predecir una variable categórica. No obstante, tras invertir muchas horas no conseguimos que terminase de entrenar el modelo, simplemente tras comenzar el entrenamiento se bloqueaba RStudio y no hubo forma de obtener un predictor como resultado.
+Del mismo modo también probamos con la función *train* ubicada en la librería *caret* [15], la cual también cuenta con diversas técnicas con las que entrenar un clasificador, entre ellas KNN. Y tras realizar el mismo proceso que en sendos casos anteriores el resultado fue el mismo, RStudio se quedaba inoperativo y nunca llegamos a obtener un clasificador entrenado de esta forma. 
 
 ## Árboles de decisión
 
 ## Random Forest
 
 
-# Ténicas de Regresión
+# Técnicas de Regresión
 
 ## Regresión lineal simple.
 
 En esta sección aplicaremos la **regresión lineal simple** consistente en generar un modelo de predicción que permita averiguar el valor de una determinada variable numérica en función de otra del mismo tipo. Para aplicar esta técnica vamos a añadir una nueva columna de clasificación binaria a nuestro dataset convirtiendo las puntuaciones de los medicamentos, que se encuentran en un rango entre 0 y 10, a dos valores binarios que representen la efectividad del tratamiento. El intervalo [0,4] corresponderá al valor 0 y por lo tanto representará que para un paciente en particular el medicamento no ha sido de ayuda, mientras que el intervalo [5-10] se corresponderá con el valor 1 que representará la eficacia del tratamiento.
 
-A continuación entrenamos un modelo de regresión simple cuya variable dependiente será el campo ratingBinaryLabel y la variable predictora será la categoría que contiene las puntuaciones originales de los tratamientos: rating. 
+A continuación entrenamos un modelo de regresión simple cuya variable dependiente será el campo ratingBinaryLabel y la variable predictora será la categoría que contiene las puntuaciones originales de los tratamientos: rating.
+
+```{r}
+# tm<-DocumentTermMatrix(train_reviews_corpus)
+# # Transform dtm to matrix and then back into a data frame for modeling
+# mat.df <- as.data.frame(data.matrix(tm), stringsAsfactors = FALSE)
+# # Column bind category (known classification)
+# mat.df <- cbind(mat.df, mini_training_dataset$rating, row.names = NULL)
+# colnames(mat.df)[ncol(mat.df)] <- "rating"
+# rg<-lm(mat.df$rating~., mat.df)
+```
 
 ```{r}
 # Recorremos las filas del conjunto de entrenamiento y comprobamos los valores en los intervalos definidos.
@@ -871,4 +903,10 @@ En base a los estudios realizados con diversas variantes de la regresión, podem
 10. Stackoverflow, *How can we find support and confident in apriori for rules?*, 2018, https://stackoverflow.com/questions/43588163/how-can-we-find-support-and-confident-in-apriori-for-rules
 11. Aisha Javed, *A Deep Dive into Naïve Bayes for Text Classification*, 25/10/2018, https://blog.datasciencedojo.com/unfolding-naive-bayes-from-scratch-part-1/
 12. Rohit Katti, *Naive Bayes Classification for Sentiment Analysis of Movie Reviews*, 30/04/2016, https://rpubs.com/cen0te/naivebayes-sentimentpolarity
-13. *Understanding Factors*, https://swcarpentry.github.io/r-novice-inflammation/12-supp-factors/index.html
+
+
+
+
+13. Manual del paquete *class*, https://cran.r-project.org/web/packages/class/class.pdf
+14. Rohit Katti, *Naive Bayes Classification for Sentiment Analysis of Movie Reviews*, 30/04/2016,  https://rpubs.com/cen0te/naivebayes-sentimentpolarity
+15. Manual del paquete *caret*, https://cran.r-project.org/web/packages/caret/caret.pdf
