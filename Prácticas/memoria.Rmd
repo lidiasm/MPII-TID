@@ -645,74 +645,164 @@ Si analizamos la **matriz de confusión** podemos comprobar como en la mayoría 
 
 Se trata de una de las técnicas predictivas que se encuentran dentro de la clasificación basada en instancias. Este algoritmo denominado **K-vecinos más cercanos** selecciona los *k* elementos más parecidos a un determinado ejemplo y les asigna la clase más frecuente. Si bien este método está pensado para trabajar con variables numéricas, vamos a aplicarlo de nuevo a la predicción de la enfermedad en base a las *reviews* de los pacientes, como con la técnica anterior. 
 
-
-CAMBIAR A 
-1) Probamos con la librería kknn pero hay muy pocos ejemplos y nos da un 99% de error.
-2) Ejemplos con la librería class y knn y nos da un 34.86667% de aciertos con k=1
-
-
-Comenzamos esta sección probando la librería *kknn* vista en clase para entrenar un clasificador utilizando la técnica que nos ocupa en cuestión. Para ello hemos aplicado el mismo procedimiento que en la técnica anterior, con la única particularidad de modificar la función encargada de decidir si un término es considerado o no en función de su número de apariciones. Y es que para este algoritmo hemos tenido que convertir la salida que proporciona dicha función en un factor para que pueda trabajar con ella. Finalmente se transforma la matriz de términos obtenida a un *dataframe*, añadiéndole la columna de clasificación de las enfermedades (de 1 a 10) y entrenamos el clasificador.
+Comenzamos esta sección probando la librería *kknn* vista en clase para entrenar un clasificador utilizando la técnica que nos ocupa en cuestión. El proceso que llevamos a cabo fue muy similar al anterior, exceptuando la extracción de los términos más comunes, es decir, directamente probamos a entrenar el clasificador con todos los términos de las *reviews* del conjunto de entrenamiento. Sin embargo, el rendimiento fue súmamente diferente puesto que obtuvimos una **tasa de error de un 99%**. Intentamos mejorar este resultado pero no encontramos ejemplos en internet en los que utilizasen esta librería en concreto aplicada a texto, si no que hacían uso de una denominada *class* [13]. Por tanto, decidimos probar suerte con la función *knn* almacenada en esta biblioteca inspirándonos, para ello, en este tutorial [14]. Al intentar entrenar el clasificador con el conjunto de entrenamiento y validarlo con el conjunto de test nos arrojaba un error acerca de las dimensiones diferentes que tenían las matrices de términos de sendos conjuntos, y es que si bien disponen del mismo número de filas, en cada conjunto de datos hay un número diferente de términos, por lo que las columnas no coincidían. Por ello, tal y como se propone en el ejemplo mencionado anteriormente, hemos utilizado **validación cruzada** para obtener tanto el conjunto de entrenamiento como el de prueba de un solo conjunto de datos, que en este caso es el conjunto de train. Para ello lo hemos dividido en un 70% para entrenar el clasificador y en un 30% para validarlo, añadiendo préviamente, la columna de clasificación de las diez enfermedades posibles. De esta forma sí hemos sido capaces de entrenar un clasificador con esta técnica.
 
 ```{r}
-#library(tm)
-# Obtenemos la matriz de los términos de las reviews de los conjuntos de entrenamiento y test.
-# train_reviews_matriz<-DocumentTermMatrix(train_reviews_corpus)
-# test_reviews_matriz<-DocumentTermMatrix(test_reviews_corpus)
-# # Nos quedamos con los términos más frecuentes (con un mínimo número de aparciciones de 5)
-# terminos_frecuentes<-findFreqTerms(train_reviews_matriz, 1)
-# # Obtenemos de nuevo la matriz con los términos más frecuentes extraidos anteriormente tanto para train como para test.
-# train_reviews_frec_matriz<-DocumentTermMatrix(train_reviews_corpus, control=list(dictionary=terminos_frecuentes))
-# test_reviews_frec_matriz<-DocumentTermMatrix(test_reviews_corpus, control=list(dictionary=terminos_frecuentes))
-# # Función que decide si tener en cuenta o no el término en función de su número de apariciones.
-# frecuencia_binaria<-function(x) { y<-ifelse(x > 0, "Yes", "No") }
-# # Obtenemos las matrices de términos tanto de train como de test.
-# train_reviews_matriz_bin2<-apply(train_reviews_frec_matriz, 2, frecuencia_binaria)
-# test_reviews_matriz_bin2<-apply(test_reviews_frec_matriz, 2, frecuencia_binaria)
-
-### Validación cruzada
 library(tm)
+# Importamos la librería con la que aplicaremos el algoritmo KNN.
 library(class)
 train_reviews_matriz<-DocumentTermMatrix(train_reviews_corpus)
-# Transform dtm to matrix and then back into a data frame for modeling
-mat.df <- as.data.frame(data.matrix(train_reviews_matriz), stringsAsfactors = FALSE)
-# Column bind category (known classification)
-mat.df <- cbind(mat.df, trainNCondition, row.names = NULL)
-colnames(mat.df)[ncol(mat.df)] <- "trainNCondition"
-# Classifier variable based on the personality typ
-cl <- mat.df[,"trainNCondition"]
-# Create model data and remove “type”
-modeldata <- mat.df[,!colnames(mat.df) %in% "trainNCondition"]
-train <- sample(nrow(mat.df), ceiling(nrow(mat.df) * .70))
-test <- (1:nrow(mat.df))[- train]
-knn.pred <- knn(modeldata[train, ], modeldata[test, ], cl[train])
-conf.mat <- table("Predictions" = knn.pred, Actual = cl[test])
-conf.mat
-(accuracy <- sum(diag(conf.mat))/length(test) * 100)
-
-######### 99% / con train_reviews_matriz_bin sale 89%
-# # Importamos la librería del algoritmo KNN.
-# library(kknn)
-# # Convertimos la matriz a un dataframe y le añadimos la columna de clasificación de las enfermedades.
-# df<-as.data.frame(data.matrix(train_reviews_matriz), stringsAsfactors = FALSE)
-# df<-cbind(df, trainNCondition)
-# df_test<-as.data.frame(data.matrix(train_reviews_matriz), stringsAsfactors = FALSE)
-# df_test<-cbind(df_test, testNCondition)
-# # Entrenamos el modelo.
-# #knn<-kknn(df$trainNCondition~., df, df_test, na.action=na.omit(), k=5)
-# knn<-train.kknn(df$trainNCondition~., df, kmax=5)
-# # Obtenemos las predicciones del modelo y su tasa de error sobre test.
-# prediccs<-fitted(knn)
-# matriz_confusion<-table(prediccs, df_test$testNCondition)
-# dd<-diag(matriz_confusion)
-# accuracy<-(sum(dd)/nrow(df_test))*100
-# test_error<-100-accuracy
-# cat("\nError en test:",test_error,"%")
+# Transformamos los términos a una matriz y luego a un dataframe para poder trabajar más fácilmente.
+train_df<-as.data.frame(data.matrix(train_reviews_matriz), stringsAsfactors = FALSE)
+# Añadimos la columna de clasificación de las enfermedades y le añadimos su correspondiente nombre
+train_df<-cbind(train_df, trainNCondition, row.names = NULL)
+colnames(train_df)[ncol(train_df)]<-"trainNCondition"
+# Obtenemos las etiquetas de las enfermedades para entrenar el clasificador.
+etiquetas<-train_df[,"trainNCondition"]
+# Obtenemos el modelo con el que vamos a entrenar el clasificador sin la columna de etiquetas, puesto que se la pasaremos de forma individual como tercer parámetro.
+modelo<-train_df[,!colnames(train_df) %in% "trainNCondition"]
+# Validación cruzada para dividir el conjunto de train en un conjunto de entrenamiento y otro de validación.
+train<-sample(nrow(train_df), ceiling(nrow(train_df) * .70))
+test<-(1:nrow(train_df))[- train]
+# Obtenemos las predicciones del conjunto de validación
+knn.pred<-knn(modelo[train, ], modelo[test, ], etiquetas[train], k=1)
+# Obtenemos la matriz de confusión y la tasa de error
+m_conf<-table("Predictions" = knn.pred, Actual = etiquetas[test])
+m_conf
+test_error<-100-(sum(diag(m_conf))/length(test) * 100)
+cat("\nError en el conjunto de prueba:",test_error,"%")
 ```
 
-Intentamos mejorar el clasificador haciendo uso de la librería *class* [13], en la cual se encuentra la función *knn* especializada en entrenar modelos aplicando la técnica que nos ocupa. Cabe destacar, además, la cantidad de tutoriales existentes, tales como [14], en los que se muestra cómo ejecutar esta función pasándole como datos de entrada texto con el objetivo de predecir una variable categórica. No obstante, tras invertir muchas horas no conseguimos que terminase de entrenar el modelo, simplemente tras comenzar el entrenamiento se bloqueaba RStudio y no hubo forma de obtener un predictor como resultado.
-Del mismo modo también probamos con la función *train* ubicada en la librería *caret* [15], la cual también cuenta con diversas técnicas con las que entrenar un clasificador, entre ellas KNN. Y tras realizar el mismo proceso que en sendos casos anteriores el resultado fue el mismo, RStudio se quedaba inoperativo y nunca llegamos a obtener un clasificador entrenado de esta forma. 
+Tal y como podemos comprobar, con `k=1`, es decir, considerando un único vecino más cercano la **tasa de error sobre el conjunto de prueba es de un 67,3%**. Si analizamos la matriz de confusión generada podemos observar que en la mayoría de los errores se concentran en torno a las enfermedades cuyas etiquetas asociadas son 2, 3, 6, 7 y 10. Esto significa que el clasificador no es capaz de distinguir correctamente entre estas dolencias en base a las *reviews* de los pacientes. En base a estos resultados podemos determinar que con esta configuración, el clasificador entrenado no dispone de una buena capacidad de generalización y por ello falla en más de la mitad de ocasiones. Investigando acerca del valor óptimo para k, es decir, encontrar el número de vecinos adecuado a considerar encontramos una idea en esta fuente [15]. Consiste en entrenar varios clasificadores mediante la técnica KNN utilizando validación cruzada y distintos valores para *k*. De este modo compara los resultados obtenidos en todos los casos y nos mostrará aquel valor de *k* para el cual se obtiene un mejor resultado.
+
+```{r, eval=FALSE}
+library(caret)
+set.seed(400)
+# Utiliza validación cruzada para probar diversos valores de k
+ctrl<-trainControl(method="repeatedcv", repeats=3)
+knnFit<-train(trainNCondition ~ ., data=train_df, method="knn", trControl=ctrl, preProcess=c("center","scale"))
+knnFit
+```
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.76\textwidth]{Imagenes/k_knn.png}
+    \caption{Validación cruzada para encontrar el k óptimo.}
+    \label{k_optimo}
+\end{figure}
+
+Tal y como podemos observar, de entre todos los experimentos realizados el clasificador entrenado con **k=5** es el que mejor precisión ha obtenido. A continuación repetiremos el mismo proceso anterior solo que en lugar de k=1 establecemos el nuevo valor óptimo descubierto para esta variable.
+
+```{r}
+library(tm)
+# Importamos la librería con la que aplicaremos el algoritmo KNN.
+library(class)
+train_reviews_matriz<-DocumentTermMatrix(train_reviews_corpus)
+# Transformamos los términos a una matriz y luego a un dataframe para poder trabajar más fácilmente.
+train_df<-as.data.frame(data.matrix(train_reviews_matriz), stringsAsfactors = FALSE)
+# Añadimos la columna de clasificación de las enfermedades y le añadimos su correspondiente nombre
+train_df<-cbind(train_df, trainNCondition, row.names = NULL)
+colnames(train_df)[ncol(train_df)]<-"trainNCondition"
+# Obtenemos las etiquetas de las enfermedades para entrenar el clasificador.
+etiquetas<-train_df[,"trainNCondition"]
+# Obtenemos el modelo con el que vamos a entrenar el clasificador sin la columna de etiquetas, puesto que se la pasaremos de forma individual como tercer parámetro.
+modelo<-train_df[,!colnames(train_df) %in% "trainNCondition"]
+# Validación cruzada para dividir el conjunto de train en un conjunto de entrenamiento y otro de validación.
+train<-sample(nrow(train_df), ceiling(nrow(train_df) * .70))
+test<-(1:nrow(train_df))[- train]
+# Obtenemos las predicciones del conjunto de validación
+knn.pred<-knn(modelo[train, ], modelo[test, ], etiquetas[train], k=5)
+# Obtenemos la matriz de confusión y la tasa de error
+m_conf<-table("Predictions" = knn.pred, Actual = etiquetas[test])
+m_conf
+test_error<-100-(sum(diag(m_conf))/length(test) * 100)
+cat("\nError en el conjunto de prueba:",test_error,"%")
+```
+
+Tal y como se puede comprobar el clasificador entrenado, considerando los cinco vecinos más cercanos, dispone de una tasa de error sobr el conjunto de prueba del **63,4%**. Si bien ha conseguido mejorar un poco con respecto al resultado anterior con k=1, podemos confirmar que esta técnica no nos aporta un clasificador capaz de predecir la enfermedad en función de las *reviews* de los pacientes, por lo que no es el mejor algoritmo para aplicarlo a nuestros datos. Si analizamos la matriz de confusión, podemos observar que la mayoría de errores se concentran en torno a las etiquetas 3, 4, 6, 7, 8. Esto significia que el clasificador no es capaz de distinguir estas enfermedades de forma correcta en base a las *reviews* de los pacientes.
+
+Posteriormente, para asegurarnos que realmente el valor de k óptimo es 5 hicimos una serie de pruebas variando el valor de este, que no vamos a adjuntar en este documento puesto que esta técnica es muy costosa computacionalmente de aplicar. Sin embargo, pudimos confirmar que **k=5** es el mejor valor que podemos establecer para esta técnica puesto que ni con k=3, con el que obtuvimos un error de 64%, ni con k=10 que proporcionaba un error 63.73%, obtuvimos una tasa de error menor.
 
 ## Árboles de decisión
+
+Los árboles de decisión se utilizan para la clasificación debido a su facilidad tanto de interpretación de los resultados como de la extracción de las reglas que ayudan a entrenar un clasificador. Se trata de un algoritmo muy potente y especialmente dedicado a trabajar con dataset complejos y con un gran número de datos. Es por ello por lo que, como con técnicas anteriores, vamos a aplicarla a las *reviews*. El objetivo sigue siendo el mismo: intentar predecir las enfermedades en base a las críticas de los pacientes ya preprocesadas. 
+
+Para ello hemos investigado un poco acerca del proceso a seguir para entrenar un clasificador mediante árboles aplicado a texto y según hemos podido ver en esta fuente [] el procedimiento es muy similar al de la técnica de Naive Bayes. En primer lugar obtenemos las matrices de términos así como la frecuencia de los mismos tanto para el conjunto de entrenamiento como para el de prueba. Estos valores serán los que se tendrá en cuenta a la hora de buscar indicios en las *reviews* que nos permitan predecir a qué enfermedad están haciendo alusión. Por último convertimos ambas matrices a dataframe con los que poder trabajar y les añadimos las respectivas columnas de clasificación de las enfermedades a sendos conjuntos de datos.
+Para entrenar el clasificador vamos a hacer uso de la librería *rpart* vista en clase y calcularemos tanto la matriz de confusión como las tasas de error tanto en entrenamiento como en validación.
+
+```{r}
+library(tm)
+library(rpart)
+# Obtenemos la matriz de los términos de las reviews de los conjuntos de entrenamiento y test.
+train_reviews_matriz<-DocumentTermMatrix(train_reviews_corpus)
+test_reviews_matriz<-DocumentTermMatrix(test_reviews_corpus)
+# Nos quedamos con los términos más frecuentes (con un mínimo número de aparciciones de 5)
+terminos_frecuentes<-findFreqTerms(train_reviews_matriz, 5)
+# Obtenemos de nuevo la matriz con los términos más frecuentes extraidos anteriormente tanto para train como para test.
+train_reviews_frec_matriz<-DocumentTermMatrix(train_reviews_corpus, control=list(dictionary=terminos_frecuentes))
+test_reviews_frec_matriz<-DocumentTermMatrix(test_reviews_corpus, control=list(dictionary=terminos_frecuentes))
+# Convertimos a dataframe el conjunto de datos de entrenamiento para pasárselos al algoritmo.
+train_freq<-as.data.frame(data.matrix(train_reviews_frec_matriz), stringsAsfactors = FALSE)
+test_freq<-as.data.frame(data.matrix(test_reviews_frec_matriz), stringsAsfactors = FALSE)
+# Añadimos la columna de clasificación de enfermedades al conjunto de test para luego 
+# realizar la predicción y evaluar el clasificador.
+train_freq<-cbind(train_freq, trainNCondition)
+test_freq<-cbind(test_freq, testNCondition)
+# Entrenamos el modelo árboles de decisión.
+clasificador_arboles<-rpart(trainNCondition~., train_freq, method="class")
+# Mostramos los resultados.
+printcp(clasificador_arboles)
+# Calculamos el error y la matriz de confusión para entrenamiento.
+train_predd<-predict(clasificador_arboles, train_freq, type="class")
+train_confusion<-table(train_freq$trainNCondition, train_predd)
+error_train<-sum(diag(train_confusion))/nrow(train_freq)
+# Calculamos el error y la matriz de confusión para test.
+test_predd<-predict(clasificador_arboles, test_freq, type="class")
+test_confusion<-table(test_freq$testNCondition, test_predd)
+test_confusion
+error_test<-sum(diag(test_confusion))/nrow(test_freq)
+cat("\nError en entrenamiento:",error_train*100,"% \nError en test:",error_test*100,"%")
+```
+
+Tal y como podemos observar las tasas de error son bastante altas, por lo que el clasificador no dispone de una buena capacidad de generalización, y por tanto, no le permite diferenciar qué enfermedad está asociada a cada *review*. Si además observamos la matriz de confusión con respecto al conjunto de test, podemos visualizar que la mayoría de falsos positivos se encuentran a partir de la etiqueta 2, por lo que a partir de la segunda dolencia ya no es capaz de diferenciarlas claramente. Continuamos investigando cómo mejorar el rendimiento de este tipo de clasificador y encontramos dos tutoriales [ y ] en los que explican una serie de parámetros de control para poder ajustar el entrenamiento del clasificador. El primero de ellos es *minsplit* con el cual le indicaremos el número mínimo de registros que debe tener un nodo para poder dividirse. Hemos probado con diversos valores y hemos comprobado que a mayor valor, peor tasa de error en sendos conjuntos. La conclusión a la que llegamos es que si establecemos un valor demasiado alto esto no permitirá dividir el nodo en más caminos y por lo tanto podemos perder la solución óptima. 
+Otro valor importante es *maxdepth*, con el que establecemos la profundidad máxima del árbol. Del mismo modo también hemos variado este valor y en función de los resultados así como del costo computacional, el mejor valor para nuestro dataset es que el árbol tenga profundidad 3. 
+
+```{r}
+# Entrenamos el modelo árboles de decisión.
+control<-rpart.control(minsplit=4, maxdepth=3)
+clasificador_arboles<-rpart(trainNCondition~., train_freq, method="class", control=control)
+# Calculamos el error y la matriz de confusión para entrenamiento.
+train_predd<-predict(clasificador_arboles, train_freq, type="class")
+train_confusion<-table(train_freq$trainNCondition, train_predd)
+error_train<-sum(diag(train_confusion))/nrow(train_freq)
+# Calculamos el error y la matriz de confusión para test.
+test_predd<-predict(clasificador_arboles, test_freq, type="class")
+test_confusion<-table(test_freq$testNCondition, test_predd)
+test_confusion
+error_test<-sum(diag(test_confusion))/nrow(test_freq)
+cat("\nError en entrenamiento:",error_train*100,"% \nError en test:",error_test*100,"%")
+plotcp(clasificador_arboles)
+```
+
+Tal y como podemos obsevar, ambas tasas de error se han reducido considerablemente hasta alcanzar niveles más normalizados. Asimismo, la matriz de confusión respecto al conjunto de prueba también ha mejorado considerablemente puesto que, tal y como se puede apreciar, el número de confusiones y enfermedades mal etiquetadas es mucho menor. Si observamos, a continuación, el gráfico que muestra la evolución del aprendizaje del árbol podemos observar que el valor óptimo para **cp=0.023**, es decir, si establecemos este valor conseguiremos que el rendimiento del clasificador sea óptimo así como su tasa de acierto puesto que no continuará explorando un camino que no mejore más allá de dicho valor. A continuación entrenamos un tercer clasificador fijando este parámetro.
+
+```{r}
+# Entrenamos el modelo árboles de decisión.
+control<-rpart.control(minsplit=4, maxdepth=3, cp=0.023)
+clasificador_arboles<-rpart(trainNCondition~., train_freq, method="class", control=control)
+# Calculamos el error y la matriz de confusión para entrenamiento.
+train_predd<-predict(clasificador_arboles, train_freq, type="class")
+train_confusion<-table(train_freq$trainNCondition, train_predd)
+error_train<-sum(diag(train_confusion))/nrow(train_freq)
+# Calculamos el error y la matriz de confusión para test.
+test_predd<-predict(clasificador_arboles, test_freq, type="class")
+test_confusion<-table(test_freq$testNCondition, test_predd)
+test_confusion
+error_test<-sum(diag(test_confusion))/nrow(test_freq)
+cat("\nError en entrenamiento:",error_train*100,"% \nError en test:",error_test*100,"%")
+```
+
+Tal y como podemos observar, se ha vuelto a reducir un poco ambos errores. Como conclusiones para terminar esta sección podemos afirmar que si bien hemos conseguido mejorar su rendimiento de forma considerable, esta técnica no proporciona buenos resultados en relación a nuestro objetivo principal, que era predecir enfermedades en función de las *reviews* de los pacientes.
 
 ## Random Forest
 
@@ -724,16 +814,6 @@ Del mismo modo también probamos con la función *train* ubicada en la librería
 En esta sección aplicaremos la **regresión lineal simple** consistente en generar un modelo de predicción que permita averiguar el valor de una determinada variable numérica en función de otra del mismo tipo. Para aplicar esta técnica vamos a añadir una nueva columna de clasificación binaria a nuestro dataset convirtiendo las puntuaciones de los medicamentos, que se encuentran en un rango entre 0 y 10, a dos valores binarios que representen la efectividad del tratamiento. El intervalo [0,4] corresponderá al valor 0 y por lo tanto representará que para un paciente en particular el medicamento no ha sido de ayuda, mientras que el intervalo [5-10] se corresponderá con el valor 1 que representará la eficacia del tratamiento.
 
 A continuación entrenamos un modelo de regresión simple cuya variable dependiente será el campo ratingBinaryLabel y la variable predictora será la categoría que contiene las puntuaciones originales de los tratamientos: rating.
-
-```{r}
-# tm<-DocumentTermMatrix(train_reviews_corpus)
-# # Transform dtm to matrix and then back into a data frame for modeling
-# mat.df <- as.data.frame(data.matrix(tm), stringsAsfactors = FALSE)
-# # Column bind category (known classification)
-# mat.df <- cbind(mat.df, mini_training_dataset$rating, row.names = NULL)
-# colnames(mat.df)[ncol(mat.df)] <- "rating"
-# rg<-lm(mat.df$rating~., mat.df)
-```
 
 ```{r}
 # Recorremos las filas del conjunto de entrenamiento y comprobamos los valores en los intervalos definidos.
@@ -903,10 +983,7 @@ En base a los estudios realizados con diversas variantes de la regresión, podem
 10. Stackoverflow, *How can we find support and confident in apriori for rules?*, 2018, https://stackoverflow.com/questions/43588163/how-can-we-find-support-and-confident-in-apriori-for-rules
 11. Aisha Javed, *A Deep Dive into Naïve Bayes for Text Classification*, 25/10/2018, https://blog.datasciencedojo.com/unfolding-naive-bayes-from-scratch-part-1/
 12. Rohit Katti, *Naive Bayes Classification for Sentiment Analysis of Movie Reviews*, 30/04/2016, https://rpubs.com/cen0te/naivebayes-sentimentpolarity
-
-
-
-
 13. Manual del paquete *class*, https://cran.r-project.org/web/packages/class/class.pdf
-14. Rohit Katti, *Naive Bayes Classification for Sentiment Analysis of Movie Reviews*, 30/04/2016,  https://rpubs.com/cen0te/naivebayes-sentimentpolarity
-15. Manual del paquete *caret*, https://cran.r-project.org/web/packages/caret/caret.pdf
+14. RPubs by RStudio, *Text Mining MBTI with Knn*, http://rpubs.com/JWB62/394875
+15. Foro de Analitycs Vidhia, *How to choose the value of K in knn algorithm*, 2015,  https://discuss.analyticsvidhya.com/t/how-to-choose-the-value-of-k-in-knn-algorithm/2606/5
+16. 
