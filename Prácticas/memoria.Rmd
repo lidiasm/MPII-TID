@@ -1,13 +1,11 @@
 ---
-geometry: margin=2cm
-output:
-  pdf_document:
-    keep_tex: yes
-  word_document: default
-  html_document:
-    df_print: paged
-lang: es-ES
+output: pdf_document
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
 <!------------------------ PORTADA --------------------->
 \thispagestyle{empty}
 
@@ -63,7 +61,7 @@ Una vez dispongamos de los dos conjuntos de datos normalizados y de las *reviews
 
 - **Clasificación**. En esta sección se aplicarán diversos algoritmos vistos en clase con el objetivo de conocer cuál es la técnica que mejor tasa de error proporciona partiendo del objetivo propuesto en la propia página del dataset [1]: **predecir la enfermedad del paciente en función de su review**. De este modo, obtendremos un clasificador capaz de predecir la dolencia que padece un paciente en función de la opinión que escriba.
 
-- **Regresión**. En este apartado se aplicarán las técnicas conocidas para obtener un clasificador que sea capaz de **predecir la efectividad del medicamento en función de la puntuación que le ha otorgado el paciente**. De este modo podremos conocer si un determinado tratamiento ha sido efectivo o no en función de una puntuación entre 0 y 10.
+- **Regresión**. En este apartado llevaremos a cabo una modificación de la idea que se propone para regresión en la página del dataset [1], es decir, intentaremos conocer cuál es la variable que mejor predice la **efectividad del medicamento**. Para ello haremos uso de las dos principalmente relacionadas con este campo: **la puntuación del fármaco y las reviews de los pacientes**. Para ello aplicaremos diversos tipos de regresión con tal de comparar la capacidad de predicción de cada clasificador en función de la variable predictora.
 
 - **Agrupamiento**. Aplicaremos diversos algoritmos de agrupamiento para encontrar aquel que mejor explique la relación existente entre 
 
@@ -152,7 +150,7 @@ for(medicamento in medicamentos[1:5]){
 
 ```
 
-Como podemos comprobar, los cinco medicamentos más comunes son especialmente recetados para paliar la enfermedad denominada *Birth Control*. Del mismo modo podemos observar que el resto de dolcencias asociadas a estos cinco tratamientos también están especializados en casos relacionados con la contracepción así como enfermedades asociadas con la menstruación y los órganos genitales femeninos. Esto nos indica que diversos tipos de dolencias, principalmente femeninas, pueden tratarse con los mismos medicamentos puesto que son indicados para un conjunto específico de dolencias de esta naturaleza en particular. Asimismo, podemos afirmar que si bien hemos comprobado que la enfermedad representada con un mayor número de muestras es *Birth Control*, tiene sentido que los cinco medicamentos más comunes estén dedicados a paliar esta dolencia, que también es sumamente común. Por tanto, podemos afirmar la relación existente entre los medicamentos más ampliamente recetados con las dolencias más altamente registradas.
+Como podemos comprobar, los cinco medicamentos más comunes son especialmente recetados para paliar la enfermedad denominada *Birth Control*. Del mismo modo podemos observar que el resto de dolencias a estos cinco tratamientos también están especializados en casos relacionados con la contracepción así como enfermedades asociadas con la menstruación y los órganos genitales femeninos. Esto nos indica que diversos tipos de dolencias, principalmente femeninas, pueden tratarse con los mismos medicamentos puesto que son indicados para un conjunto específico de dolencias de esta naturaleza en particular. Asimismo, podemos afirmar que si bien hemos comprobado que la enfermedad representada con un mayor número de muestras es *Birth Control*, tiene sentido que los cinco medicamentos más comunes estén dedicados a paliar esta dolencia, que también es sumamente común. Por tanto, podemos afirmar la relación existente entre los medicamentos más ampliamente recetados con las dolencias más altamente registradas.
  
 Para el siguiente caso realizaremos el mismo cálculo pero en orden inverso, es decir, comprobaremos cuáles son los medicamentos más comunes para una misma enfermedad. De este modo podremos observar los distintos tratamientos que se pueden aplicar a una misma enfermedad además de comprobar su popularidad a la hora de recetar cada uno de ellos.
 
@@ -331,8 +329,9 @@ Como podemos comprobar en la gráfica anterior, en este dataset reducido ya no h
 
 Del mismo modo procedemos con el **conjunto de prueba** de modo que también cuente con hasta 10 enfermedades diferentes con 500 muestras para cada una de ellas. Para ello repetiremos el mismo proceso anterior.
 
-```{r, tidy=TRUE}
+```{r paged.print=TRUE, tidy=TRUE}
 ## CONJUNTO DE PRUEBA
+
 # Obtenemos un resumen acerca de las enfermedades registradas en el dataset.
 recuento_etiquetas<-summary(new_test_dataset$condition)
 # Recopilamos los nombres de las enfermedades.
@@ -365,7 +364,7 @@ ggplot(data=dataframe, aes(x=enfermedades, y=recuento)) + geom_bar(stat="identit
 
 En este subapartado procedemos a aplicar diversas técnicas para preparar los datos textuales, en especial las *reviews* de los pacientes, para que posteriormente podamos aplicar ciertos algoritmos con mayor facilidad. En primer lugar vamos a crear los vectores de documentos a partir de la columna anteriormente mencionada. Para ello convertiremos cada una de las críticas de los pacientes en un documento y las almacenaremos en un vector común denominado *corpus* [2].
 
-```{r, warning=FALSE, tidy=TRUE}
+```{r message=FALSE, warning=FALSE, tidy=TRUE}
 # Cargamos el paquete que nos permitirá aplicar ciertas operaciones sobre textos.
 library("tm")
 # Datos de entrenamiento.
@@ -374,7 +373,6 @@ train_reviews<-as.vector(mini_training_dataset$review)
 # Lo convertimos en un documento y lo almacenamos en el corpus que posteriormente crearemos.
 train_reviews_corpus<-VectorSource(train_reviews)
 train_reviews_corpus<-VCorpus(train_reviews_corpus)
-
 # Datos de test.
 test_reviews<-as.vector(mini_test_dataset$review)
 test_reviews_corpus<-VectorSource(test_reviews)
@@ -415,6 +413,7 @@ train_reviews_corpus[[5]]$content
 ```
 
 Como podemos observar, tras este primer preprocesamiento de las *reviews* de los pacientes se presentan textos en los que únicamente aparecen términos que tienen un mayor grado de relevancia para el estudio de este dataset en particular. No obstante, a consecuencia de eliminar palabras, pueden existir documentos sin contenido y por lo tanto no disponen de ninguna utilidad. Este será el siguiente procesamiento que aplicaremos a continuación: **eliminar los documentos vacíos.** [3].
+
 ```{r, tidy=TRUE}
 # Datos de entrenamiento.
 # Borraremos los documentos que estén vacíos. Para ello los tranformamos en una matriz de documentos.
@@ -453,7 +452,7 @@ Tras la aplicación de esta última técnica podemos comprobar que se ha produci
 
 En esta sección vamos a estudiar las relaciones que existen entre todas los campos de nuestro dataset para comprobar si algunos de ellos están correlacionados. Para ello vamos a convertir los atributos categóricos, como las enfermedades y los tratamientos, en valores numéricos sobre los que aplicar el estudio de la correlación tal y como se lleva a cabo en este tutorial [4]. Sin embargo, campos como la fecha en la que se publicó la crítica del paciente así como esta misma, los vamos a omitir puesto que no tiene sentido intentar convertirlos en variables numéricas.
 
-```{r, warning=FALSE, tidy=TRUE}
+```{r message=FALSE, warning=FALSE, tidy=TRUE}
 # Copio el dataset original en otro que modificaremos para este apartado.
 df_corr<-mini_training_dataset
 # Eliminamos los campos categóricos puesto que vamos a convertir sus valores en valores numéricos.
@@ -502,7 +501,7 @@ Tal y como hemos comentado al comienzo de este documento, una de las columnas m�
 
 Una vez disponemos de los datos preprocesados, tanto asociados al conjunto de entrenamiento como al de prueba, procedemos a representar gráficamente los términos obtenidos de los diversos documentos mediante una primera **nube de palabras**, en la cual se ordenarán las palabras de las críticas de los pacientes en función de su número de apariciones. De este modo podremos conocer los términos más utilizados en las *reviews*. Estos serán representados en un mayor tamaño y se irá reduciendo conforme disminuya el número de veces que aparece cada uno de los términos. Para dibujar la nube de palabras utilizaremos la librería *wordcloud2* [5] que es capaz de realizar gráficos más interesantes y vistosos que el paquete wordcloud convencional.
 
-```{r, tidy=TRUE}
+```{r, tidy=TRUE, results=FALSE}
 library(wordcloud2)
 library(knitr)
 # Convertimos el corpus en una matriz de documentos cuyas filas serán los términos que aparecen en cada uno de ellos.
@@ -511,8 +510,20 @@ train_reviews_matriz_terminos<-as.matrix(TermDocumentMatrix(train_reviews_corpus
 frecuencia_terminos<-sort(rowSums(train_reviews_matriz_terminos), decreasing=TRUE)
 # Obtenemos un dataframe de los términos ordenados para poder representar la nube de palabras.
 train_reviews_dataframe_ordenado<-data.frame(word=names(frecuencia_terminos), freq=frecuencia_terminos)
-wordcloud2(train_reviews_dataframe_ordenado, size=1.2)
+# Almacenamos la nube de palabras en una imagen para poder mostrarla al completo en la memoria.
+nube_palabras<-wordcloud2(train_reviews_dataframe_ordenado, size=1.2)
+library("htmlwidgets")
+saveWidget(nube_palabras,"nube_palabras.html",selfcontained = F)
+library(webshot)
+webshot("nube_palabras.html","nube_palabras.png",delay=20) 
 ```
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=1.0\textwidth]{Imagenes/nube_palabras.png}
+    \caption{Nube de palabras.}
+    \label{nube_palabras}
+\end{figure}
 
 Tal y como podemos comprobar, la mayor parte de los términos más utilizados por los pacientes a la hora de expresar su opinión acerca de los fármacos recetados están directamente relacionados con el tiempo, como *day*, *year*, entre otros. Posteriormente, podemos observar un segundo grupo de palabras relacionadas con los sentimientos como *feel* o *pain*. Incluso podemos afirmar que dos de las enfermedades que se encuentran en nuestro dataset aparecen esta nube de palabras: *pain* y *anxieti*. Para estudiar más a fondo el contexto en el que se encuentran estos términos a continuación procedemos a analizar los sentimientos que se encuentran tras cada una de las críticas de los pacientes.
 
@@ -520,7 +531,7 @@ Tal y como podemos comprobar, la mayor parte de los términos más utilizados po
 
 En esta sección trataremos de conocer el grado de satisfacción general de los pacientes con respecto a los tratamientos que se les han recetado para su dolencia particular. Para ello, en primer lugar, procedemos a realizar una análisis general que nos informe acerca de la tendencia global de las críticas tal y como se realiza en este estudio [6]. Utilizaremos el corpus extraido tras el preprocesamiento de las críticas y le aplicaremos el método **analyzeSentiment** de la biblioteca *SentimentAnalysis* [7] con la cual obtendremos el tipo de sentimiento que se esconde tras cada una de las *reviews*: positivo, negativo o neutro. Para ello este tipo de biblioteca contiene una serie de diccionarios con los términos más relevantes para cada uno de los tres tipos de sentimientos. En nuestro caso particular utilizaremos el diccionario por defecto denominado *QDAP*.
 
-```{r, warning=FALSE, tidy=TRUE}
+```{r message=FALSE, warning=FALSE, tidy=TRUE}
 library(SentimentAnalysis)
 # Obtenemos los sentimientos generales de las reviews
 train_analisis_sentimientos<-convertToDirection(analyzeSentiment(train_reviews_corpus)$SentimentQDAP) 
@@ -559,7 +570,7 @@ Inspirándonos en este estudio [8], el primer paso que procedemos a realizar con
 
 Según esta fuente [10], para ajustar el primer valor deberemos de conocer el número de transacciones contenidas en la base de datos así como las frecuencias máximas de los términos recogidos en las *reviews*.
 
-```{r, warning=FALSE, tidy=TRUE}
+```{r message=FALSE, warning=FALSE, tidy=TRUE}
 # Importamos la librería para obtener los términos del corpus separados.
 library(arules)
 library(corpus)
@@ -576,7 +587,7 @@ summary(itemFrequency(reviews_bd_transaccional))
 
 Como podemos observar existen 5.000 transacciones dentro de la base de datos obtenida. El término más repetido es *take* con hasta 2187 apariciones y su respectiva frecuencia es de 0.437, la máxima de entre todos los términos. Este valor nos indica el soporte máximo que podemos establecer. Sin embargo, para poder calcular este valor de una forma más precisa necesitamos establecer el número mínimo de apariciones que deseamos para cada uno de los términos y, posteriormente, lo dividimos entre el número total de transacciones. Comenzaremos estableciendo una frecuencia mínima de 500, por lo que el `soporte = 500/5000 = 0.1`. Establecemos el valor por defecto para la confianza: 0.8.
 
-```{r, warning=FALSE, tidy=TRUE}
+```{r message=FALSE, warning=FALSE, tidy=TRUE}
 # Importamos la librería para obtener las reglas de asociación y la base de datos transaccional
 library(arules)
 library(arulesViz)
@@ -623,7 +634,7 @@ Es un método probabilístico que determina la clase más probable a la que pert
 Para aplicar esta técnica nos hemos basado en estos dos tutoriales [11, 12]. Como primer paso se deberá asignar a cada una de las enfermedades disponibles, tanto en el conjunto de entrenamiento como en el de test, una etiqueta numérica unívoca, que sea capaz de identificarla de forma individual. Para ello utilizamos la función *factor* tal y como se muestra en este tutorial [13], la cual realizará este mismo proceso descrito obteniendo mediante *as.numeric* las etiquetas numéricas del 1 al 10 asociadas a cada una de las enfermedades de ambos dataset. Tras visualizar el resultado obtenido podemos afirmar que estas etiquetas numéricas se asignan de menor a mayor en función del orden alfabético, por lo que las dolencias que comiencen por *A* dispondrán de los primeros valores.
 A continuación obtenemos la matriz de documentos que contiene las *reviews* de los pacientes, como hemos realizado en anteriores técnicas, solo que en este caso solo nos vamos a quedar con aquellos con una frecuencia mínima de cinco apariciones. De este modo reducimos el número de palabras y consideraremos solo las más relevantes. Por último entrenamos el clasificador con el conjunto de entrenamiento y las etiquetas asociadas a las dolencias y mediremos su bondad a través de la tasa de error y de la matriz de confusión.
 
-```{r, warning=FALSE, tidy=TRUE}
+```{r message=FALSE, warning=FALSE, tidy=TRUE}
 library(tm)
 library(e1071)
 # Asignamos a cada enfermedad diferente una etiqueta de 0 a 10 y la añadimos como una columna más a ambos datasets.
@@ -671,7 +682,7 @@ Se trata de una de las técnicas predictivas que se encuentran dentro de la clas
 
 Comenzamos esta sección probando la librería *kknn* vista en clase para entrenar un clasificador utilizando la técnica que nos ocupa en cuestión. El proceso que llevamos a cabo fue muy similar al anterior, exceptuando la extracción de los términos más comunes, es decir, directamente probamos a entrenar el clasificador con todos los términos de las *reviews* del conjunto de entrenamiento. Sin embargo, el rendimiento fue súmamente diferente puesto que obtuvimos una **tasa de error de un 99%**. Intentamos mejorar este resultado pero no encontramos ejemplos en internet en los que utilizasen esta librería en concreto aplicada a texto, si no que hacían uso de una denominada *class* [13]. Por tanto, decidimos probar suerte con la función *knn* almacenada en esta biblioteca inspirándonos, para ello, en este tutorial [14]. Al intentar entrenar el clasificador con el conjunto de entrenamiento y validarlo con el conjunto de test nos arrojaba un error acerca de las dimensiones diferentes que tenían las matrices de términos de sendos conjuntos, y es que si bien disponen del mismo número de filas, en cada conjunto de datos hay un número diferente de términos, por lo que las columnas no coincidían. Para solucionar este problema el tutorial mencionado anteriormente propone utilizar la técnica de **validación cruzada** para dividir el conjunto de entrenamiento en un conjunto para entrenar y otro para validar. De este modo nos aseguramos que en sendos conjuntos se encuentran todos los términos. De esta forma sí hemos sido capaces de entrenar un clasificador con esta técnica.
 
-```{r, tidy=TRUE}
+```{r message=FALSE, tidy=TRUE}
 library(tm)
 library(dplyr)
 library(class)
@@ -701,7 +712,7 @@ test_error<-100-(sum(diag(m_conf))/length(test) * 100)
 cat("\nError en el conjunto de prueba:",test_error,"%")
 ```
 
-Tal y como podemos comprobar, con `k=1`, es decir, considerando un único vecino más cercano la **tasa de error sobre el conjunto de prueba es de un 64.67%**. Si analizamos la matriz de confusión generada podemos observar que en la mayoría de los errores se concentran en torno a las enfermedades cuyas etiquetas asociadas son 2, 3, 6, 7 y 10. Esto significa que el clasificador no es capaz de distinguir correctamente entre estas dolencias en base a las *reviews* de los pacientes. En base a estos resultados podemos determinar que con esta configuración, el clasificador entrenado no dispone de una buena capacidad de generalización y por ello falla en más de la mitad de ocasiones. Investigando acerca del valor óptimo para k, es decir, encontrar el número de vecinos adecuado a considerar encontramos una idea en esta fuente [15]. Consiste en entrenar varios clasificadores mediante la técnica KNN utilizando validación cruzada y distintos valores para *k*. De este modo compara los resultados obtenidos en todos los casos y nos mostrará aquel valor de *k* para el cual se obtiene un mejor resultado. Como este procedimiento es computacionalmente muy costoso, solo lo hemos ejecutado una vez y tras el siguiente código se proporcionará la captura con los resultados obtenidos.
+Tal y como podemos comprobar, con `k=1`, es decir, considerando un único vecino más cercano la **tasa de error sobre el conjunto de prueba es mayor del 60%**. Si analizamos la matriz de confusión generada podemos observar que en la mayoría de los errores se concentran en torno a las enfermedades cuyas etiquetas asociadas son 2, 3, 6, 7 y 10. Esto significa que el clasificador no es capaz de distinguir correctamente entre estas dolencias en base a las *reviews* de los pacientes. En base a estos resultados podemos determinar que con esta configuración, el clasificador entrenado no dispone de una buena capacidad de generalización y por ello falla en más de la mitad de ocasiones. Investigando acerca del valor óptimo para k, es decir, encontrar el número de vecinos adecuado a considerar encontramos una idea en esta fuente [15]. Consiste en entrenar varios clasificadores mediante la técnica KNN utilizando validación cruzada y distintos valores para *k*. De este modo compara los resultados obtenidos en todos los casos y nos mostrará aquel valor de *k* para el cual se obtiene un mejor resultado. Como este procedimiento es computacionalmente muy costoso, solo lo hemos ejecutado una vez y tras el siguiente código se proporcionará la captura con los resultados obtenidos.
 
 ```{r, eval=FALSE, tidy=TRUE}
 library(caret)
@@ -733,7 +744,7 @@ test_error<-100-(sum(diag(m_conf))/length(test) * 100)
 cat("\nError en el conjunto de prueba:",test_error,"%")
 ```
 
-Tal y como se puede comprobar el clasificador entrenado, considerando los cinco vecinos más cercanos, dispone de una tasa de error sobr el conjunto de prueba del **62.73%**. Si bien ha conseguido mejorar un poco con respecto al resultado anterior con k=1, podemos confirmar que esta técnica no nos aporta un clasificador capaz de predecir la enfermedad en función de las *reviews* de los pacientes, por lo que no es el mejor algoritmo para aplicarlo a nuestros datos. Si analizamos la matriz de confusión, podemos observar que la mayoría de errores se concentran a partir de la segunda etiqueta. Esto significia que el clasificador no es capaz de distinguir estas enfermedades de forma correcta en base a las *reviews* de los pacientes.
+Tal y como se puede comprobar el clasificador entrenado, considerando los cinco vecinos más cercanos, dispone de una **tasa de error sobre el conjunto de prueba también superior al 60%**, aunque menor que en el caso anterior. Si bien ha conseguido mejorar un poco con respecto al resultado anterior con k=1, podemos confirmar que esta técnica no nos aporta un clasificador capaz de predecir la enfermedad en función de las *reviews* de los pacientes, por lo que no es el mejor algoritmo para aplicarlo a nuestros datos. Si analizamos la matriz de confusión, podemos observar que la mayoría de errores se concentran a partir de la segunda etiqueta. Esto significia que el clasificador no es capaz de distinguir estas enfermedades de forma correcta en base a las *reviews* de los pacientes.
 
 Posteriormente, para asegurarnos que realmente el valor de k óptimo es 5 hicimos una serie de pruebas variando el valor de este, que no vamos a adjuntar en este documento puesto que esta técnica es muy costosa computacionalmente de aplicar. Sin embargo, pudimos confirmar que **k=5** es el mejor valor que podemos establecer para esta técnica puesto que ni con k=3, con el que obtuvimos un error de 64%, ni con k=10 que proporcionaba un error 63.73%, obtuvimos una tasa de error menor.
 
@@ -824,7 +835,7 @@ Esta técnica se presenta como una variante de otra denominada *Bagging* por la 
 
 Para entrenar un clasificador con esta técnica vamos a hacer uso de la librería *randomForest* vista en clase, en particular con la función de igual nombre **randomForest**[19]. Más concretamente, procedemos a utilizar la versión de dicha función en la cual se puede expresar la fórmula que definirá el modelo que deseamos entrenar. En un primer intento encontramos un error debido a que la matriz de términos del conjunto de entrenamiento y la del conjunto de prueba no disponen de los mismos términos, y por tanto, el clasificador no puede obtener las predicciones de términos que no ha visto préviamente. Es por ello por lo que, en un segundo intento, aplicamos de nuevo la **validación cruzada** para dividir nuestro conjunto de entrenamiento original en un conjunto de *train* y otro de *test* para validar, posteriormente, el clasificiador entrenado.
 
-```{r, tidy=TRUE}
+```{r message=FALSE, tidy=TRUE}
 library(tm)
 # Obtenemos la matriz de términos del conjunto de entrenamiento.
 train_reviews_matriz<-DocumentTermMatrix(train_reviews_corpus)
@@ -861,13 +872,13 @@ Como podemos comprobar el algoritmo ha aplicado regresión para poder entrenar e
 
 Como conclusión para finalizar esta sección, podemos determinar que de todas las técnicas de clasificación probadas **Random Forest** es la que mejor resultados ha proporcionado entrenando un clasificador con una muy buena capacidad de predicción. 
 
-# Técnicas de Regresión
+# Regresión para predecir la efectividad del fármaco por su puntuación.
+
+El objetivo en esta primera sección consiste en intentar predecir la efectividad del medicamento en función de su puntuación, de 0 a 10, asignada por el paciente al que se le ha recetado. Para ello entrenaremos diversos modelos de regresión para comprobar cuál es el que mejor resultados puede proporcionar. Con el fin de llevar a cabo esta idea, necesitamos añadir una nueva columna de clasificación binaria a nuestro dataset convirtiendo las puntuaciones de los medicamentos, que se encuentran en un rango entre 0 y 10, a dos valores binarios que representen la efectividad del tratamiento. El intervalo [0,4] corresponderá al valor 0 y por lo tanto representará que para un paciente en particular el medicamento no ha sido de ayuda, mientras que el intervalo [5-10] se corresponderá con el valor 1 que representará la eficacia del tratamiento.
 
 ## Regresión lineal simple.
 
-En esta sección aplicaremos la **regresión lineal simple** consistente en generar un modelo de predicción que permita averiguar el valor de una determinada variable numérica en función de otra del mismo tipo. Para aplicar esta técnica vamos a añadir una nueva columna de clasificación binaria a nuestro dataset convirtiendo las puntuaciones de los medicamentos, que se encuentran en un rango entre 0 y 10, a dos valores binarios que representen la efectividad del tratamiento. El intervalo [0,4] corresponderá al valor 0 y por lo tanto representará que para un paciente en particular el medicamento no ha sido de ayuda, mientras que el intervalo [5-10] se corresponderá con el valor 1 que representará la eficacia del tratamiento.
-
-A continuación entrenamos un modelo de regresión simple cuya variable dependiente será el campo ratingBinaryLabel y la variable predictora será la categoría que contiene las puntuaciones originales de los tratamientos: rating.
+En esta sección entrenaremos el modelo más sencillo posible aplicando, para ello, la **regresión lineal simple**. La variable dependiente será el campo ratingBinaryLabel, el cual contiene las etiquetas de clasificación de los fármacos explicadas anteriormente, mientras que la variable predictora será la categoría que contiene las puntuaciones originales de los tratamientos: *rating*.
 
 ```{r, tidy=TRUE}
 # Recorremos las filas del conjunto de entrenamiento y comprobamos los valores en los intervalos definidos.
@@ -884,7 +895,6 @@ for (i in 1:length(mini_test_dataset$rating)){
   else
     mini_test_dataset$ratingLabel[i]<-1
 }
-
 # Especificamos la variable a predecir, que en nuestro caso será el campo binario relacionado con la efectividad del tratamiento, y la variable predictora que se corresponde con el campo de las puntuaciones originales de los medicamentos.
 modelo = mini_training_dataset$ratingLabel ~ mini_training_dataset$rating
 # Entrenamos el modelo.
@@ -899,10 +909,10 @@ Sin embargo, para medir la bondad del modelo de una forma más precisa y tradici
 
 ```{r, tidy=TRUE}
 # Función que recibe el modelo de regresión entrenado para realizar las predicciones tanto del conjunto de prueba como del conjunto de entrenamiento y calcula ambas tasas de error. 
-evaluar_modelo_regresion<-function(modelo) {
+evaluar_modelo_regresion<-function(modelo, datos_train, datos_test) {
   # Calculamos la probabilidad de cada muestra de pertenecer a una clase u a otra.
-  train_probab<-predict(modelo, mini_training_dataset, type="response")
-  test_probab<-predict(modelo, mini_test_dataset, type="response")
+  train_probab<-predict(modelo, datos_train, type="response")
+  test_probab<-predict(modelo, datos_test, type="response")
   # Inicializamos todas las etiquetas a 0.
   train_predicc<-rep(0, length(train_probab))
   test_predicc<-rep(0, length(test_probab))
@@ -911,23 +921,23 @@ evaluar_modelo_regresion<-function(modelo) {
   train_predicc[train_probab >= .5] = 1
   test_predicc[test_probab >= .5] = 1
   # Mostramos la matriz de confusión que nos aportará más información acerca de los falsos positivos.
-  cat("Matriz de confusión.\n")
-  print(table(pred=test_predicc, real=mini_test_dataset$ratingLabel))
+  cat("\nMatriz de confusión.\n")
+  print(table(pred=test_predicc, real=datos_test$ratingLabel))
   
   # Ahora calculamos la tasa de error en % para cada conjunto.
-  train_error = mean(train_predicc != mini_training_dataset$ratingLabel)
-  test_error = mean(test_predicc != mini_test_dataset$ratingLabel)
+  train_error = mean(train_predicc != datos_train$ratingLabel)
+  test_error = mean(test_predicc != datos_test$ratingLabel)
   cat("\nTasa de error en entrenamiento:",train_error*100,"%")
   cat("\nTasa de error en prueba:",test_error*100,"%")
 } 
 
-evaluar_modelo_regresion(regresion_lineal)
+evaluar_modelo_regresion(regresion_lineal, mini_training_dataset, mini_test_dataset)
 ```
 
 Tal y como podemos comprobar, la **tasa de error sobre el conjunto de entrenamiento**, como era de esperar es bastante pequeña. Sin embargo, el hecho de que sea 0% no es favorable puesto que, por el contrario, **el error en el conjunto de prueba** es considerablemente alto, por lo tanto podemos reflexionar acerca de si el modelo se ha ajustado demasiado a los datos de entrenamiento y por ello su capacidad de generalización es menor. 
 Asimismo, si analizamos la matriz de confusión, podemos comprobar que existe una alta tasa de errores al clasificar muestras en la categoría 1 mientras que en realidad pertenecen a la clase cuya etiqueta es 0, y viceversa. Con el objetivo de evaluar la calidad del modelo entrenado procedemos a representar la **curva ROC** así como estimar el área existente debajo de la misma.
 
-```{r, tidy=TRUE}
+```{r message=FALSE, tidy=TRUE}
 # Función que realiza las predicciones con la función del paquete asociado a la curva ROC para posteriormente pintarla.
 library("ROCR")
 curvaROC<-function(modelo, etiquetas) { 
@@ -951,38 +961,17 @@ curvaROC(test_probab, mini_test_dataset$ratingLabel)
 
 Como podemos comprobar la curva ROC es prácticamente lineal y por ende el área bajo ella es bastante escasa. Este aspecto nos indica que la capacidad de generalización del modelo entrenado es bastante escasa, con lo que explica la tasa de error tan elevada sobre el conjunto de prueba que hemos obtenido préviamente. 
 
-### Regresión lineal robusta
-
-En esta subsección trataremos de entrenar un modelo predictivo lineal utilizando, para ello, una subtécnica de la anterior denominada **regresión robusta**. Esta técnica presenta ciertas ventajas como la independencia a los *valores atípicos*, los cuales son datos que no siguen el patrón del resto y por lo tanto sus valores son muy dispares. Con este modelo pretendemos mejorar los resultados del anterior así como obtener tasas de error más confiables y robustas. 
-
-```{r, tidy=TRUE}
-# Cargamos la librería que nos permitirá entrenar un modelo con esta técnica.
-library(MASS)
-# Entrenamos el modelo.
-modelo = mini_training_dataset$ratingLabel ~ mini_training_dataset$rating
-regresion_robusta = rlm(modelo, mini_training_dataset)
-# Obtenemos un resumen estadístico acerca del modelo entrenado.
-summary(regresion_robusta)
-# Comprobamos la tasa de error sobre el conjunto de entrenamiento y de prueba.
-evaluar_modelo_regresion(regresion_robusta)
-# Dibujamos su curva ROC
-test_probab = predict(regresion_robusta, mini_test_dataset, type=c("response"))
-curvaROC(test_probab, mini_test_dataset$ratingLabel)
-```
-
-Tal y como podemos observar en los resultados, el modelo entrenado con *regresión lineal robusta* no proporciona una mejora significativa puesto que tanto las tasas de error sobre ambos conjuntos como el área de la curva ROC siguen indicando que el modelo dispone de una capacidad de generalización bastante escasa. Por lo tanto, podemos concluir que para nuestro dataset un modelo entrenado mediante regresión lineal simple para predecir la efectividad de los tratamientos en función de su puntuación original, no es aconsejable puesto que no llega a tener una buena capacidad de predicción.
-
-## Regresión logística simple
+## Regresión logística simple.
 
 Aplicaremos esta técnica con el objetivo de entrenar un modelo predictivo capaz de averiguar, para cada muestra, la clase binaria a la que pertenece el tratamiento: 0 (no efectivo) o 1 (efectivo). Para ello se realizará un procedimiento similar al anterior solo que en este caso utilizaremos la función correspondiente a la **regresión logística** para llevar a cabo el entrenamiento del sistema. 
 
-```{r, tidy=TRUE}
+```{r message=FALSE, warning=FALSE, tidy=TRUE}
 # Entrenamos un modelo predictivo con regresión logística. Para ello especificamos como variable dependiente la que deseamos predecir, que en nuestro caso será ratingLabel, y como variable predictora la puntuación original en el intervalo [0, 10].
 regresion_logistica = glm(ratingLabel~rating, family=binomial(logit), data=mini_training_dataset)
 # Resumen acerca del modelo entrenado.
 summary(regresion_logistica)
 # Evaluación del modelo entrenado.
-evaluar_modelo_regresion(regresion_logistica)
+evaluar_modelo_regresion(regresion_logistica, mini_training_dataset, mini_test_dataset)
 ```
 
 Tal y como podemos comprobar el modelo entrenado con la técnica actual no es confiable puesto que ambos campos tienen un p-value muy cercano a 1, por lo que podemos concluir que no puede ser predicha la etiqueta binaria mediante las puntuaciones originales de forma lineal.
@@ -993,18 +982,18 @@ Si bien los resultados de los modelos predictivos entrenados mediante técnicas 
 
 ```{r, tidy=TRUE}
 # Entrenamos el modelo con regresión polinomial estableciendo un polinomio de grado 2.
-regresion_polinomica = lm(formula=ratingLabel~poly(rating, 2), data=mini_training_dataset)
+regresion_polinomica<-lm(formula=ratingLabel~poly(rating, 2), data=mini_training_dataset)
 # Estudiamos el modelo entrenado.
 summary(regresion_polinomica)
 # Calculamos las tasas de error sobre entrenamiento y prueba.
-evaluar_modelo_regresion(regresion_polinomica)
+evaluar_modelo_regresion(regresion_polinomica, mini_training_dataset, mini_test_dataset)
 ```
 
 Como podemos observar en el estudio del modelo entrenado los *p-values* de todos los componentes son bastante bajos por lo que podemos determinar que este nuevo modelo predictivo es confiable y es suficiente utilizar un polinomio de orden 2. Asimismo también podemos concluir que la variable *rating* está relacionada con la que intentamos predecir: *ratingLabel*. También podemos comprobar una mejoría sobre los resultados mostrados en la matriz de confusión puesto que el número de muestras erróneamente clasificadas ha descendido considerablemente, comparado con los anteriores modelos lineales. Este mismo hecho se demuestra al evaluar el modelo predictivo y obtener las tasas de error tanto en el conjunto de entrenamiento como en el de prueba, ya que como podemos observar, los errores entran dentro de un rango razonable. 
 
 A continuación procedemos a representar gráficamente la curva que describe el polinomio calculado para entrenar dicho modelo. Para ello, en primer lugar, debemos de obtener las predicciones para la etiqueta binaria mediante la interpolación de puntos dentro del rango del campo predictor. A mayor número de puntos, más precisa será la representación gráfica.
 
-```{r, tidy=TRUE}
+```{r message=FALSE, warning=FALSE, tidy=TRUE}
 # Interpolación de puntos dentro del rango del campo rating
 rango<-range(mini_training_dataset$rating)
 puntos<-seq(from=rango[1], to=rango[2], by=1)
@@ -1025,7 +1014,103 @@ En esta gráfica queda cláramente representada la relación existente entre la 
 
 En base a los estudios realizados con diversas variantes de la regresión, podemos determinar que la **regresión polinómica** ha sido el único con el que hemos obtenido un modelo competitivo, confiable y capaz de clasificar correctamente los tratamientos en efectivos o no efectivos en base a la puntuación, entre 0 y 10, asociada por cada uno de los pacientes afectados. Con ello podemos concluir que nuestro problema **no es lineal*, y por lo tanto no se puede entrenar un modelo lineal para realizar una buena predicción.
 
-# Bibliografía
+# Regresión para predecir la efectividad del fármaco en base a las reviews.
+
+En esta segunda sección dedicada a la regresión vamos a entrenar diversos modelos aplicando esta técnica del mismo modo que en el apartado anterior. El objetivo concreto es el mismo, es decir, vamos a entrenar modelos que sean capaces de averiguar si un tratamiento es efectivo o no en función de la *review* que el paciente escribió. Nuestro objetivo final es conocer si la puntuación original es una variable mejor predictora o si por el contrario las opiniones de los pacientes aportan una mayor cantidad de información que permita entrenar un modelo competente.
+
+## Regresión lineal simple.
+
+En este segundo apartado la variable dependiente será la misma, es decir, *ratingLabel* contendrá las etiquetas clasificatorias en relación a la efectividad de un medicamento. Sin embargo, en este caso serán los términos más frecuentes de las matrices los que jugarán el papel de variables independientes con las que intentaremos entrenar el clasificador para que, posteriormente, pueda predecir si un fármaco ha sido efectivo o no en función de la opinión del paciente.
+
+```{r}
+library(tm)
+# Obtenemos la matriz de los términos de las reviews de los conjuntos de entrenamiento y test.
+train_reviews_matriz<-DocumentTermMatrix(train_reviews_corpus)
+test_reviews_matriz<-DocumentTermMatrix(test_reviews_corpus)
+# Nos quedamos con los términos más frecuentes (con un mínimo número de aparciciones de 5)
+terminos_frecuentes<-findFreqTerms(train_reviews_matriz, 5)
+# Obtenemos de nuevo la matriz con los términos más frecuentes extraidos anteriormente tanto para train como para test.
+train_reviews_frec_matriz<-DocumentTermMatrix(train_reviews_corpus, control=list(dictionary=terminos_frecuentes))
+test_reviews_frec_matriz<-DocumentTermMatrix(test_reviews_corpus, control=list(dictionary=terminos_frecuentes))
+# Convertimos a dataframe el conjunto de datos de entrenamiento para pasárselos al algoritmo.
+train_freq<-as.data.frame(data.matrix(train_reviews_frec_matriz), stringsAsfactors = FALSE)
+test_freq<-as.data.frame(data.matrix(test_reviews_frec_matriz), stringsAsfactors = FALSE)
+# Añadimos la columna de clasificación de la efectividad del medicamento.
+train_freq<-cbind(train_freq, ratingLabel=mini_training_dataset$ratingLabel)
+test_freq<-cbind(test_freq, ratingLabel=mini_test_dataset$ratingLabel)
+# Entrenamos el modelo y a continuación lo evaluamos.
+lm_reviews<-lm(train_freq$ratingLabel~., train_freq)
+evaluar_modelo_regresion(lm_reviews, train_freq, test_freq)
+```
+
+Tal y como podemos observar el error en entrenamiento es bastante bajo mientras que el error en el conjunto de prueba es algo elevado. De nuevo podemos visualizar que el clasificador se ha adaptado demasiado a los datos de entrenamiento y eso ha provocado una disminución de su capacidad de predicción, como pasó en la primera sección. No obstante, en este caso, podemos notar que el sobreajuste no es tan acusado y que por tanto este modelo dispone de un poco más de capacidad de generalización utilizando las *reviews* en lugar de la puntuación original del fármaco.
+Si analizamos la matriz de confusión podemos observar que la mayoría de errores se concentran en etiquetar a los medicamentos como no eficaces (clase 0), es decir, el clasificador está siendo demasiado positivo y por tanto está categorizando fármacos como efectivos cuando no lo son. A continuación procedemos a visualizar la **curva ROC** que nos aportará más información acerca de la capacidad de generalización del modelo obtenido.
+
+```{r}
+# Curva ROC para el conjunto de prueba
+test_probab = predict(lm_reviews, test_freq, type=c("response"))
+curvaROC(test_probab, test_freq$ratingLabel)
+```
+
+Si observamos la gráfica podemos comprobar, que en este tipo de regresión, el modelo entrenado mediante las opiniones de los pacientes dispone de una mayor capacidad de generalización que utilizando las puntuaciones de los fármacos, en el que recordemos que era prácticamente lineal. Asimismo, acompañando a esta teoría se encuentra el incremento del área bajo la curva.
+
+## Regresión logística simple.
+
+A continuación procedemos a entrenar un modelo predictivo no lineal mediante **regresión logística** especificando la misma dependencia entre la variable clasificatoria y los términos de las críticas con los que intentaremos averiguar la primera. 
+
+```{r, message=FALSE, warning=FALSE, tidy=TRUE}
+# Cargamos la librería que nos permitirá entrenar un modelo con esta técnica.
+library(MASS)
+# Entrenamos el modelo.
+glm_reviews = glm(train_freq$ratingLabel~., family=binomial(logit), data=train_freq)
+# Comprobamos la tasa de error sobre el conjunto de entrenamiento y de prueba.
+evaluar_modelo_regresion(glm_reviews, train_freq, test_freq)
+# Dibujamos su curva ROC
+test_probab = predict(glm_reviews, test_freq, type=c("response"))
+curvaROC(test_probab, test_freq$ratingLabel)
+```
+
+En este caso, tal y como podemos apreciar, el modelo entrenado muestra unas tasas de error más elevadas que el entrenado con regresión lineal, por lo que podemos deducir que este clasificador dispone de una menor capacidad de generalización. Esto puede ser debido a que las dos clases existentes de la efectividad del fármaco pueden ser separables mediante una recta mejor que con otra función más compleja no lineal, y por lo tanto el clasificador entrenado con regresión lineal simple muestra mejores resultados.
+
+## Regresión polinómica.
+
+Por último vamos a entrenar un clasificador mediante **regresión polinómica** para intentar disminuir las tasas de errores obtenidas en técnicas anteriores con el modelo que nos ocupa en esta segunda sección. Para ello, hemos comenzado repitiendo el grado del polinomio estableciendolo como en la primera sección, es decir, de grado 2, y los resultados obtenidos han sido en torno a un **2,9% de error en entrenamaiento y un 31,66% en prueba**. Es por ello por lo que presentamos más resultados variando el grado del polinomio para comprobar si mejoran estos primeros resultados.
+
+```{r, message=FALSE, tidy=TRUE}
+# Entrenamos el modelo con regresión polinomial estableciendo un polinomio de grado 2.
+lmpol_reviews_grado2<-lm(formula=train_freq$ratingLabel~poly(rating, 2), data=train_freq)
+# Calculamos las tasas de error sobre entrenamiento y prueba.
+cat("\nGrado del polinomio: 2")
+evaluar_modelo_regresion(lmpol_reviews_grado2, train_freq, test_freq)
+# Entrenamos el modelo con regresión polinomial estableciendo un polinomio de grado 3.
+lmpol_reviews_grado3<-lm(formula=train_freq$ratingLabel~poly(rating, 3), data=train_freq)
+cat("\n\nGrado del polinomio: 3")
+evaluar_modelo_regresion(lmpol_reviews_grado3, train_freq, test_freq)
+# Entrenamos el modelo con regresión polinomial estableciendo un polinomio de grado 4.
+lmpol_reviews_grado4<-lm(formula=train_freq$ratingLabel~poly(rating, 4), data=train_freq)
+cat("\n\nGrado del polinomio: 4")
+evaluar_modelo_regresion(lmpol_reviews_grado4, train_freq, test_freq)
+# Entrenamos el modelo con regresión polinomial estableciendo un polinomio de grado 5.
+lmpol_reviews_grado5<-lm(formula=train_freq$ratingLabel~poly(rating, 5), data=train_freq)
+cat("\n\nGrado del polinomio: 5")
+evaluar_modelo_regresion(lmpol_reviews_grado5, train_freq, test_freq)
+```
+
+Tal y como podemos observar, a partir de grado 3 los resultados empeoran por lo que aumentar el grado del polinomio así como su complejidad no es la solución para mejorar el modelo entrenado mediante esta técnica. Es por ello por lo que en base a los resultados obtenidos, podemos concluir que para **predecir la efectividad del medicamento en base a las reviews, el mejor modelo de regresión obtenido es el lineal**, puesto que es con el que hemos obtenido un clasificador que comete el menor número de fallos y dispone de una curva ROC cuya área es más de un 70%.
+
+# Conclusiones finales.
+
+Como hemos podido comprobar a lo largo del documento, los tres campos más relevantes de ambos conjuntos de datos son aquellos que representan la enfermedad del paciente, el fármaco recetado así como su propia opinión acerca del tratamiento. Es por ello por lo que la mayoría de los algoritmos aplicados se han concentrado en tales datos.
+
+En primer lugar, destacamos que tras realizar el **análisis de sentimientos** acerca de las críticas de los enfermos nos pareció bastante sorprendente que la mayoría de ellas fueran **positivas**, puesto que no es lo habitual cuando se trata de datos asociados a enfermedades, por lo que podemos reflexionar que estos pacientes han sido correctamente atendidos y diagnosticados por especialistas competentes que han sabido, en la mayoría de ocasiones, paliar sus dolencias. En relación a las **reglas de asociación** obtenidas era de esperar que los términos con un mayor vínculo fuesen aquellos que definiesen el nombre de una enfermedad, como *Birth Control*, así como las expresiones comunes representativas de la toma de un medicamento tanto verbales como temporales.
+
+En la sección de **clasificación** hemos entrenado el mejor clasificador obtenido en todo este documento a través de la técnica **Random Forest** obteniendo tasas de error aproximadas al 0.5%, por lo que podemos concluir que este es el modelo predictivo más competente y que mejor sabe predecir **las enfermedades en función de las opiniones de los pacientes** para nuestro conjuntos particulares de datos. Nuestra reflexión acerca del excelente comportamiento de este algoritmo para nuestro dataset reside en la capacidad de introducir cierta aleatoriedad en el entrenamiento, ya que esta cualidad le proporciona un alto grado de flexibilidad para no sobreajustarse a los datos de entrenamiento y lidiar con datos caracterizados por la incertidumbre. Y es que, efectivamente, cada crítica escrita por un paciente tiene un contenido distinto y es totalmente subjetiva y dependiente de la persona que la ha redactado. Es por ello por lo que pensamos que esta técnica ha proporcionado un clasificador muy competitivo para nuestro dataset y el modelo de predicción establecido basado en las *reviews*.
+
+En relación a las técnicas de **regresión** hemos podido comprobar cómo ha variado la naturaleza del clasificador a la hora de predecir la efectividad del medicamento en función de **la puntuación o de las opiniones de los pacientes**. Gracias al análisis que hemos llevado a cabo en estas dos secciones hemos podido comprobar la importancia de escoger una buena variable predictora para poder entrenar un clasificador con una buena capacidad de generalización. Asimismo, también han quedado patentes las grandes diferencias entre la predicción numérica o con texto, pues pueden dar lugar a modelos predictivos totalmente distintos, como ha sido nuestro caso. En el primero el mejor clasificador ha sido entrenado con **regresión polinómica** de grado 2, mientras que con los términos de las *reviews* como variables independientes el mejor modelo predictivo lo hemos conseguido con **regresión lineal simple**.
+
+<<<<<<<<<<<<<<<<<CONCLUSIONES DE AGRUPACIÓN AQUÍ>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+# Bibliografía.
 
 1. Jessica Li, Kaggle University Club Hackathon, *UCI ML Drug Review Dataset*, https://www.kaggle.com/jessicali9530/kuc-hackathon-winter-2018#drugsComTrain_raw.csv
 2. *Introduction to Corpus*, https://cran.r-project.org/web/packages/corpus/vignettes/corpus.html
